@@ -20,18 +20,35 @@ class SuratController {
         $tgl_mulai    = $_POST['tgl_mulai'] ?? '';
         $tgl_selesai  = $_POST['tgl_selesai'] ?? '';
         $lokasi       = $_POST['lokasi'] ?? '';
-        $dipa         = $_POST['dipa'] ?? '';
-        $pejabat      = $_POST['pejabat'] ?? '';
-        $namaPejabat  = $_POST['nama_pejabat'] ?? '';
+
+        // Default DIPA 
+        $dipa = !empty($_POST['dipa']) 
+            ? $_POST['dipa'] 
+            : "SP DIPA-139.05.1.693321/2025 tanggal 2 Desember 2024";
+
+        // Pejabat 
+        $pejabatJabatan = $_POST['pejabat'] ?? '';
+
+        // Nama pejabat (nama + NIP)
+        $nipPejabat   = $_POST['nama_pejabat'] ?? '';
+        $namaPejabat  = '';
+        foreach (getNamaPejabatList() as $pj) {
+            if ($pj['nip'] == $nipPejabat) {
+                $namaPejabat = $pj['nama'];
+                break;
+            }
+        }
+
+        // Tembusan opsional
         $tembusan     = $_POST['tembusan'] ?? '';
 
         if (empty($nipList)) {
-            die("❌ Tidak ada pegawai dipilih!");
+            die("Tidak ada pegawai dipilih!");
         }
 
         // Ambil data semua pegawai
         $daftarPegawai = [];
-        $adaPegawaiLuar = false; // flag kalau ada pegawai luar
+        $adaPegawaiLuar = false; 
 
         foreach ($nipList as $kode) {
             // Pegawai internal (ada di DB)
@@ -54,7 +71,7 @@ class SuratController {
         // Format tanggal (contoh: Selasa–Rabu, 19–20 Agustus 2025)
         $tanggalFormatted = formatTanggalRange($tgl_mulai, $tgl_selesai);
 
-        // Kirim ke template surat
+        // Mengirim data ke template surat
         include __DIR__ . '/../templates/surat_tugas.php';
     }
 }
