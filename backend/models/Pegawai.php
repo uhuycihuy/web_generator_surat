@@ -10,14 +10,18 @@ class Pegawai {
     }
 
     public function getAll() {
-        $query = "SELECT nip, nama_pegawai, pangkat, golongan, jabatan FROM " . $this->table . " ORDER BY nama_pegawai ASC";
+        $query = "SELECT nip, nama_pegawai, pangkat, golongan, jabatan 
+                  FROM " . $this->table . " 
+                  ORDER BY nama_pegawai ASC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt;
     }
 
     public function getByNip($nip) {
-        $query = "SELECT nip, nama_pegawai, pangkat, golongan, jabatan FROM " . $this->table . "WHERE nip = ? LIMIT 1";
+        $query = "SELECT nip, nama_pegawai, pangkat, golongan, jabatan 
+                  FROM " . $this->table . " 
+                  WHERE nip = ? LIMIT 1";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(1, $nip);
         $stmt->execute();
