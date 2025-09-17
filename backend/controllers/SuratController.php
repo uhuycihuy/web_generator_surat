@@ -14,9 +14,9 @@ class SuratController {
     }
 
     // Proses form surat
-    public function generateSurat() {
+    public function getSuratData() {
         $nipList      = $_POST['pegawai'] ?? [];   
-        $acara        = $_POST['acara'] ?? '';
+        $acara        = $_POST['acara'] ?? '';  
         $tgl_mulai    = $_POST['tgl_mulai'] ?? '';
         $tgl_selesai  = $_POST['tgl_selesai'] ?? '';
         $lokasi       = $_POST['lokasi'] ?? '';
@@ -41,10 +41,6 @@ class SuratController {
 
         // Tembusan opsional
         $tembusan     = $_POST['tembusan'] ?? '';
-
-        if (empty($nipList)) {
-            die("Tidak ada pegawai dipilih!");
-        }
 
         // Ambil data semua pegawai
         $daftarPegawai = [];
@@ -71,7 +67,72 @@ class SuratController {
         // Format tanggal (contoh: Selasa–Rabu, 19–20 Agustus 2025)
         $tanggalFormatted = formatTanggalRange($tgl_mulai, $tgl_selesai);
 
-        // Mengirim data ke template surat
+        return [
+            'nipList' => $nipList,
+            'acara' => $acara,
+            'tgl_mulai' => $tgl_mulai,
+            'tgl_selesai' => $tgl_selesai,
+            'lokasi' => $lokasi,
+            'dipa' => $dipa,
+            'pejabatJabatan' => $pejabatJabatan,
+            'nipPejabat' => $nipPejabat,
+            'namaPejabat' => $namaPejabat,
+            'tembusan' => $tembusan,
+            'daftarPegawai' => $daftarPegawai,
+            'adaPegawaiLuar' => $adaPegawaiLuar,
+            'tanggalFormatted' => $tanggalFormatted
+        ];
+    }
+
+    // Method untuk preview surat (AJAX)
+    public function previewSurat() {
+        // Set header untuk AJAX response
+        header('Content-Type: text/html; charset=utf-8');
+        
+        // Ambil data surat
+        $data = $this->getSuratData();
+        
+        // Extract variables untuk template
+        extract($data);
+        
+        // Load template preview 
+        include __DIR__ . '/../templates/surat_preview.php';
+    }
+
+    // Method untuk generate surat final (dengan layout penuh)
+    public function generateSurat() {
+        $data = $this->getSuratData();
+        
+        // Validasi data wajib
+        if (empty($data['nipList'])) {
+            die("Tidak ada pegawai dipilih!");
+        }
+        
+        // Extract variables untuk template
+        extract($data);
+
+        // Mengirim data ke template surat lengkap
         include __DIR__ . '/../templates/surat_tugas.php';
     }
+
+    // Method untuk handle request berdasarkan action
+    public function handleRequest() {
+        $action = $_GET['action'] ?? $_POST['action'] ?? 'generate';
+        
+        switch ($action) {
+            case 'preview':
+                $this->previewSurat();
+                break;
+            case 'generate':
+            default:
+                $this->generateSurat();
+                break;
+        }
+    }
+}
+
+// Auto-handle request jika dipanggil langsung
+if (!empty($_POST) || !empty($_GET)) {
+    $controller = new SuratController();
+    $controller->handleRequest();
 }
