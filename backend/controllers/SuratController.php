@@ -95,7 +95,7 @@ class SuratController {
         // Set header untuk AJAX response
         header('Content-Type: text/html; charset=utf-8');
         
-        // Ambil data surat
+        // Ambil data surat 
         $data = $this->getSuratData();
         
         // Extract variables untuk template
