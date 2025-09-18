@@ -3,6 +3,12 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/Pegawai.php';
 require_once __DIR__ . '/../helpers/utils.php';
 
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use PhpOffice\PhpWord\PhpWord;
+use PhpOffice\PhpWord\IOFactory;
+use PhpOffice\PhpWord\Shared\Html;
+
 class SuratController {
     private $db;
     private $pegawaiModel;
@@ -99,33 +105,44 @@ class SuratController {
         include __DIR__ . '/../templates/surat_preview.php';
     }
 
-    // Method untuk generate surat final (dengan layout penuh)
-    public function generateSurat() {
+    // Export ke Word 
+    public function exportWord() {
         $data = $this->getSuratData();
-        
-        // Validasi data wajib
-        if (empty($data['nipList'])) {
-            die("Tidak ada pegawai dipilih!");
-        }
-        
-        // Extract variables untuk template
         extract($data);
 
-        // Mengirim data ke template surat lengkap
+        // Render template HTML surat_tugas.php ke string
+        ob_start();
         include __DIR__ . '/../templates/surat_tugas.php';
+        $html = ob_get_clean();
+
+        // Buat dokumen Word baru
+        $phpWord = new PhpWord();
+        $section = $phpWord->addSection();
+
+        // Convert HTML template ke Word
+        Html::addHtml($section, $html, false, false);
+
+        // Output ke browser
+        header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        header('Content-Disposition: attachment; filename="surat_tugas.docx"');
+        header('Cache-Control: max-age=0');
+
+        $writer = IOFactory::createWriter($phpWord, 'Word2007');
+        $writer->save("php://output");
+        exit;
     }
 
     // Method untuk handle request berdasarkan action
     public function handleRequest() {
-        $action = $_GET['action'] ?? $_POST['action'] ?? 'generate';
-        
+        $action = $_GET['action'] ?? $_POST['action'] ?? 'export';
+
         switch ($action) {
             case 'preview':
                 $this->previewSurat();
                 break;
-            case 'generate':
+            case 'export':
             default:
-                $this->generateSurat();
+                $this->exportWord();
                 break;
         }
     }
