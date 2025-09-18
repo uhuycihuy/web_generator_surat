@@ -132,7 +132,7 @@
     </div>
 
     <!-- Nomor Surat -->
-    <div class="nomor-surat">
+    <div class="nomor-surat"> 
         Nomor: ___________________
     </div>
 
