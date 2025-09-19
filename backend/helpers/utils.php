@@ -37,7 +37,7 @@ function formatTanggalRange($tglMulai, $tglSelesai) {
     // Jika bulan dan tahun sama
     if ($bln1 === $bln2 && $thn1 === $thn2) {
         if ($tgl1 === $tgl2) {
-            return "$hari1, $tgl1 $bln1 $thn1";
+            return "$hari1,tanggal $tgl1 $bln1 $thn1";
         } else {
             return "$hari1–$hari2, tanggal $tgl1–$tgl2 $bln1 $thn1";
         }
