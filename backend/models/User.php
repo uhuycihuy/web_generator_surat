@@ -9,23 +9,14 @@ class User {
         $this->conn = $db;
     }
 
-    public function login($username, $password) {
+    public function getByUsername($username) {
         $query = "SELECT no_id, username, password, role 
-                  FROM " . $this->table . " 
-                  WHERE username = ? 
-                  LIMIT 1";        
+                FROM " . $this->table . " 
+                WHERE username = ? LIMIT 1";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(1, $username);
         $stmt->execute();
-
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($user && password_verify($password, $user['password'])) {
-            unset($user['password']);
-            return $user;
-        }
-
-        return false;
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     // Update data user (ubah username / password)

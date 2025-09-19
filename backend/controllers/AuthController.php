@@ -20,7 +20,7 @@ class AuthController {
             $_SESSION['user'] = [
                 'id' => $user['no_id'],
                 'username' => $user['username'],
-                'role' => $user['role']   // simpan role
+                'role' => $user['role']   
             ];
             header("Location: dashboard.php");
             exit;
