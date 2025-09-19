@@ -28,5 +28,47 @@ class Pegawai {
 
         return $stmt->fetch(PDO::FETCH_ASSOC);
     } 
+
+    //Tambah Pegawai (Khusu admin)
+    public function addPegawai($nip, $nama, $pangkat, $golongan, $jabatan) {
+        $query = "INSERT INTO " . $this->table . " 
+                  (nip, nama_pegawai, pangkat, golongan, jabatan) 
+                  VALUES (:nip, :nama, :pangkat, :golongan, :jabatan)";
+        $stmt = $this->conn->prepare($query);
+
+        $stmt->bindParam(':nip', $nip);
+        $stmt->bindParam(':nama', $nama);
+        $stmt->bindParam(':pangkat', $pangkat);
+        $stmt->bindParam(':golongan', $golongan);
+        $stmt->bindParam(':jabatan', $jabatan);
+
+        return $stmt->execute();
+    }
+
+    //Update data Pegawai (Khusus Admin)
+    public function updatePegawai($nip, $nama, $pangkat, $golongan, $jabatan) {
+        $query = "UPDATE " . $this->table . " 
+                  SET nama_pegawai = :nama, pangkat = :pangkat, 
+                      golongan = :golongan, jabatan = :jabatan
+                  WHERE nip = :nip";
+        $stmt = $this->conn->prepare($query);
+
+        $stmt->bindParam(':nip', $nip);
+        $stmt->bindParam(':nama', $nama);
+        $stmt->bindParam(':pangkat', $pangkat);
+        $stmt->bindParam(':golongan', $golongan);
+        $stmt->bindParam(':jabatan', $jabatan);
+
+        return $stmt->execute();
+    }
+
+    //Delete Data Pegawai (Kusus Admin)
+    public function deletePegawai($nip) {
+        $query = "DELETE FROM " . $this->table . " WHERE nip = :nip";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':nip', $nip);
+
+        return $stmt->execute();
+    }
 }
 ?>  

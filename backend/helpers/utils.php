@@ -1,4 +1,6 @@
 <?php
+session_start(); 
+
 function formatTanggalRange($tglMulai, $tglSelesai) {
     if (empty($tglMulai)) return '';
 
@@ -63,5 +65,26 @@ function getNamaPejabatList() {
             'nama'  => 'Ahmad Najib Burhani'
         ]
     ];
+}
+
+// Cek apakah user sudah login
+function checkLogin() {
+    if (!isset($_SESSION['user'])) {
+        header("Location: login.php");
+        exit;
+    }
+}
+
+//Cek apakah user rolenya admin
+function checkAdmin() {
+    if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
+        echo "Akses ditolak! Hanya admin yang boleh.";
+        exit;
+    }
+}
+
+// Ambil data user yang login
+function currentUser() {
+    return $_SESSION['user'] ?? null;
 }
 ?>

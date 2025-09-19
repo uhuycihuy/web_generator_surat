@@ -14,6 +14,7 @@ class SuratController {
     private $pegawaiModel;
 
     public function __construct() {
+        checkLogin();
         $database = new Database();
         $this->db = $database->getConnection();
         $this->pegawaiModel = new Pegawai($this->db);
