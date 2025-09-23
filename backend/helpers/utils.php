@@ -1,5 +1,5 @@
 <?php
-session_start(); 
+// session_start(); // Dikomentari karena tidak semua halaman memerlukan session
 
 function formatTanggalRange($tglMulai, $tglSelesai) {
     if (empty($tglMulai)) return '';

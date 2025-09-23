@@ -1,0 +1,32 @@
+# Temporary files
+*.tmp
+*.temp
+test_*.doc
+test_*.docx
+surat_*_test.*
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+error.log
+access.log
+
+# Backup files
+*.bak
+*.backup
+
+# Cache
+cache/
+*.cache
+
+# Dependencies (already in repo, so ignore changes)
+vendor/composer/installed.json
