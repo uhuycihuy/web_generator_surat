@@ -61,3 +61,4 @@ if (!empty($_POST) || !empty($_GET)) {
     $controller = new AuthController();
     $controller->handleRequest();
 }
+

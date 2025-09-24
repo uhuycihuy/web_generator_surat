@@ -1,10 +1,16 @@
 <?php
+require_once __DIR__ . '/BaseController.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/Pegawai.php';
 require_once __DIR__ . '/../helpers/utils.php';
+require_once __DIR__ . '/../helpers/PegawaiHelper.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'export_word') {
+class SuratUndanganController extends BaseController {
+    public function exportWord() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['action']) || $_POST['action'] !== 'export_word') {
+            return $this->jsonResponse(['error' => 'Invalid request'], 400);
+        }
     try {
         // Get database connection
         $database = new Database();
@@ -30,15 +36,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $namaPejabat = '';
         $nipPejabat = $nip_pejabat;
         
-        // Hardcoded pejabat data
-        $pejabatList = [
-            '197901142003121001' => 'M Samsuri',
-            '197604272005021001' => 'Ahmad Najib Burhani'
-        ];
-        
-        if (isset($pejabatList[$nip_pejabat])) {
-            $namaPejabat = $pejabatList[$nip_pejabat];
-        }
+        // Get pejabat data using utils function
+        $pejabatList = array_column(getNamaPejabatList(), 'nama', 'nip');
+        $namaPejabat = $pejabatList[$nip_pejabat] ?? '';
         
         // Get pegawai data untuk daftar undangan
         $daftarPegawai = [];
@@ -63,20 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             }
         }
         
-        // Format tanggal Indonesia
-        $tanggalFormatted = '';
-        if ($hari_tanggal) {
-            $bulan = [
-                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-                5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
-            ];
-            
-            $hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-            
-            $date = new DateTime($hari_tanggal);
-            $tanggalFormatted = $hari[$date->format('w')] . ', ' . $date->format('j') . ' ' . $bulan[(int)$date->format('n')] . ' ' . $date->format('Y');
-        }
+        // Format tanggal using utils function
+        $tanggalFormatted = formatTanggalRange($hari_tanggal, $hari_tanggal);
         
         // Build daftar undangan
         $undanganRows = '';
@@ -136,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     <tr>
                         <td style="width: 80px; vertical-align: top;">Nomor</td>
                         <td style="width: 10px; vertical-align: top;">:</td>
-                        <td style="vertical-align: top;">' . htmlspecialchars($nomor_surat) . '</td>
+                        <td style="vertical-align: top;"></td>
                     </tr>
                     <tr>
                         <td style="vertical-align: top;">Lampiran</td>
@@ -158,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 
                 <!-- Isi Surat -->
                 <div style="margin: 15px 0; text-align: justify; line-height: 1.5;">
-                    <p>Dalam rangka membangun <em>' . htmlspecialchars($rangka) . '</em> di Perguruan Tinggi/Lembaga Riset, kami bermaksud menyelenggarakan rapat yang ditujukan bagi para dosen dan peneliti. Sehubungan dengan hal tersebut, kami mengundang Bapak/Ibu untuk berkenan hadir dan berpartisipasi dalam rapat yang akan dilaksanakan pada</p>
+                    <p>Dalam rangka membangun <em>' . htmlspecialchars($agenda) . '</em> di Perguruan Tinggi/Lembaga Riset, kami bermaksud menyelenggarakan rapat yang ditujukan bagi para dosen dan peneliti. Sehubungan dengan hal tersebut, kami mengundang Bapak/Ibu untuk berkenan hadir dan berpartisipasi dalam rapat yang akan dilaksanakan pada</p>
                 </div>
                 
                 <!-- Detail Kegiatan -->
@@ -247,7 +235,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 <div style="page-break-before: always; margin-top: 30px;">
                     <div style="text-align: center; font-weight: bold; font-size: 12pt; margin-bottom: 20px;">
                         Lampiran<br>
-                        Nomor: ' . htmlspecialchars($nomor_surat) . '<br>
+                        Nomor: <br>
                         Tanggal: ' . $tanggalFormatted . '
                     </div>
                     
@@ -271,29 +259,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         </body>
         </html>';
         
-        // Convert HTML to Word using simple method
+        // Download file using BaseController method
         $filename = 'surat_undangan_' . date('Y-m-d') . '.doc';
-        
-        // Clear output buffer
-        while (ob_get_level()) {
-            ob_end_clean();
-        }
-        
-        // Set headers
-        header('Content-Type: application/msword');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Cache-Control: max-age=0');
-        
-        // Output HTML as DOC
-        echo $html;
-        exit();
+        $this->downloadFile($html, $filename);
         
     } catch (Exception $e) {
-        header('Content-Type: text/plain');
-        echo "Error: " . $e->getMessage();
-        exit();
+        return $this->jsonResponse(['error' => $e->getMessage()], 500);
     }
-} else {
-    echo "Invalid request";
+    }
+}
+
+// Handle request
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $controller = new SuratUndanganController();
+    $controller->exportWord();
 }
 ?>

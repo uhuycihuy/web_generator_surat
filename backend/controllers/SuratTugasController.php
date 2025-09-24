@@ -1,8 +1,14 @@
 <?php
+require_once __DIR__ . '/BaseController.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../helpers/utils.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'export_word') {
+class SuratTugasController extends BaseController {
+    public function exportWord() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['action']) || $_POST['action'] !== 'export_word') {
+            return $this->jsonResponse(['error' => 'Invalid request'], 400);
+        }
     try {
         // Get database connection
         $database = new Database();
@@ -10,28 +16,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         
         // Get POST data
         $selectedPegawai = $_POST['pegawai'] ?? [];
-        $nomor_surat = $_POST['nomor_surat'] ?? ('001/ST/' . date('Y'));
         $tgl_mulai = $_POST['tgl_mulai'] ?? '';
         $tgl_selesai = $_POST['tgl_selesai'] ?? '';
         $acara = $_POST['acara'] ?? '';
         $lokasi = $_POST['lokasi'] ?? '';
-        $dipa = $_POST['dipa'] ?? '';
+        $dipa = $_POST['dipa'] ?? 'SP DIPA-139.05.1.693321/2025 tanggal 2 Desember 2024';
         $tembusan = $_POST['tembusan'] ?? '';
         $nip_pejabat = $_POST['nama_pejabat'] ?? '';
         
-        // Get data pejabat dari hardcoded list (tidak dari database karena tabel pejabat belum ada)
-        $namaPejabat = '';
+        // Get pejabat data using utils function
+        $pejabatList = array_column(getNamaPejabatList(), 'nama', 'nip');
+        $namaPejabat = $pejabatList[$nip_pejabat] ?? '';
         $nipPejabat = $nip_pejabat;
-        
-        // Hardcoded pejabat data
-        $pejabatList = [
-            '197901142003121001' => 'M Samsuri',
-            '197604272005021001' => 'Ahmad Najib Burhani'
-        ];
-        
-        if (isset($pejabatList[$nip_pejabat])) {
-            $namaPejabat = $pejabatList[$nip_pejabat];
-        }
         
         // Get pegawai data
         $daftarPegawai = [];
@@ -59,30 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             }
         }
         
-        // Create HTML content yang sesuai dengan preview
-        $tanggalFormatted = '';
-        if ($tgl_mulai && $tgl_selesai) {
-            $bulan = [
-                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-                5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
-            ];
-            
-            $start = new DateTime($tgl_mulai);
-            $end = new DateTime($tgl_selesai);
-            
-            if ($tgl_mulai === $tgl_selesai) {
-                $tanggalFormatted = $start->format('j') . ' ' . $bulan[(int)$start->format('n')] . ' ' . $start->format('Y');
-            } else {
-                if ($start->format('n') === $end->format('n') && $start->format('Y') === $end->format('Y')) {
-                    // Same month and year
-                    $tanggalFormatted = $start->format('j') . ' s.d ' . $end->format('j') . ' ' . $bulan[(int)$end->format('n')] . ' ' . $end->format('Y');
-                } else {
-                    // Different month or year
-                    $tanggalFormatted = $start->format('j') . ' ' . $bulan[(int)$start->format('n')] . ' ' . $start->format('Y') . ' s.d ' . $end->format('j') . ' ' . $bulan[(int)$end->format('n')] . ' ' . $end->format('Y');
-                }
-            }
-        }
+        // Format tanggal using utils function
+        $tanggalFormatted = formatTanggalRange($tgl_mulai, $tgl_selesai);
         
         // Build pegawai table rows
         $pegawaiRows = '';
@@ -141,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 
                 <div style="text-align: center; font-weight: bold; font-size: 12pt; margin: 20px 0; text-decoration: underline;">
                     <strong>SURAT TUGAS</strong><br>
-                    <span style="font-weight: normal; font-size: 10pt;">Nomor: ' . htmlspecialchars($nomor_surat) . '</span>
+                    <span style="font-weight: normal; font-size: 10pt;">Nomor: </span>
                 </div>
                 
                 <div style="margin: 15px 0; text-align: justify; line-height: 1.5;">
@@ -192,29 +166,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         </body>
         </html>';
         
-        // Convert HTML to Word using simple method
+        // Download file using BaseController method
         $filename = 'surat_tugas_' . date('Y-m-d') . '.doc';
-        
-        // Clear output buffer
-        while (ob_get_level()) {
-            ob_end_clean();
-        }
-        
-        // Set headers
-        header('Content-Type: application/msword');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Cache-Control: max-age=0');
-        
-        // Output HTML as DOC
-        echo $html;
-        exit();
+        $this->downloadFile($html, $filename);
         
     } catch (Exception $e) {
-        header('Content-Type: text/plain');
-        echo "Error: " . $e->getMessage();
-        exit();
+        return $this->jsonResponse(['error' => $e->getMessage()], 500);
     }
-} else {
-    echo "Invalid request";
+    }
+}
+
+// Handle request
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $controller = new SuratTugasController();
+    $controller->exportWord();
 }
 ?>

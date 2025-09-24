@@ -68,7 +68,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generator Surat Tugas - Kementerian Pendidikan Tinggi, Sains, dan Teknologi</title>
+    <title>Generator Surat Undangan - Kementerian Pendidikan Tinggi, Sains, dan Teknologi</title>
     <style>
         * {
             margin: 0;
@@ -83,7 +83,7 @@ try {
         }
 
         .header {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
             color: white;
             padding: 15px 20px;
             display: flex;
@@ -174,7 +174,7 @@ try {
         .form-icon {
             width: 50px;
             height: 50px;
-            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            background: linear-gradient(135deg, #10b981, #059669);
             border-radius: 10px;
             display: flex;
             align-items: center;
@@ -233,9 +233,9 @@ try {
 
         .form-input:focus, .form-textarea:focus, .form-select:focus {
             outline: none;
-            border-color: #3b82f6;
+            border-color: #10b981;
             background: white;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
             transform: translateY(-1px);
         }
 
@@ -275,27 +275,14 @@ try {
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            background: linear-gradient(135deg, #10b981, #059669);
             color: white;
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
             color: white;
-            text-decoration: none;
-        }
-
-        .btn-secondary {
-            background: #f3f4f6;
-            color: #374151;
-            border: 1px solid #d1d5db;
-        }
-
-        .btn-secondary:hover {
-            background: #e5e7eb;
-            transform: translateY(-1px);
-            color: #374151;
             text-decoration: none;
         }
 
@@ -313,15 +300,15 @@ try {
         }
 
         .preview-section {
-            background: #1e40af;
+            background: #059669;
             border-radius: 12px;
             padding: 0;
             overflow: hidden;
-            box-shadow: 0 4px 20px rgba(30, 64, 175, 0.3);
+            box-shadow: 0 4px 20px rgba(5, 150, 105, 0.3);
         }
 
         .preview-header {
-            background: linear-gradient(135deg, #1e40af, #3b82f6);
+            background: linear-gradient(135deg, #059669, #10b981);
             color: white;
             padding: 20px 25px;
             text-align: center;
@@ -369,8 +356,8 @@ try {
             font-style: italic;
             height: 100%;
             background-image: 
-                radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 75% 75%, rgba(147, 197, 253, 0.1) 0%, transparent 50%);
+                radial-gradient(circle at 25% 25%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(52, 211, 153, 0.1) 0%, transparent 50%);
         }
 
         .update-indicator {
@@ -418,8 +405,8 @@ try {
         }
 
         .select2-container--default.select2-container--focus .select2-selection--multiple {
-            border-color: #3b82f6 !important;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
         }
 
         .pegawai-luar-form {
@@ -440,32 +427,85 @@ try {
         </div>
         <div class="header-buttons">
             <a href="../index.php" class="header-btn">📄 Generator Surat</a>
-            <a href="surat_undangan.php" class="header-btn">✉️ Surat Undangan</a>
+            <a href="surat_tugas.php" class="header-btn">📝 Surat Tugas</a>
         </div>
     </header>
 
     <div class="container">
         <div class="form-section">
             <div class="form-header">
-                <div class="form-icon">📝</div>
+                <div class="form-icon">✉️</div>
                 <div class="form-title">
-                    <h2>Generator Surat Tugas</h2>
-                    <p>Lengkapi data untuk membuat surat</p>
+                    <h2>Generator Surat Undangan</h2>
+                    <p>Lengkapi data untuk membuat undangan</p>
                 </div>
             </div>
-            <form id="suratTugasForm" method="POST" action="../backend/controllers/SuratTugasController.php">
+            <form id="suratUndanganForm" method="POST" action="../backend/controllers/SuratUndanganController.php">
+
+
                 <div class="form-group">
-                    <label class="form-label required">Kegiatan/Acara</label>
-                    <textarea id="acara" name="acara" class="form-textarea" placeholder="Rekonsiliasi Kebutuhan dan Penyusunan Prognosis Anggaran Sekretariat Direktorat Jenderal Sains dan Teknologi ..." required>Rekonsiliasi Kebutuhan dan Penyusunan Prognosis Anggaran Sekretariat Direktorat Jenderal Sains dan Teknologi</textarea>
+                    <label class="form-label required">Jenis Acara</label>
+                    <select id="jenis_acara" name="jenis_acara" class="form-select">
+                        <option value="offline">Offline</option>
+                        <option value="online">Online</option>
+                    </select>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label required">Daftar Pegawai</label>
+                    <label class="form-label required">Hari, Tanggal</label>
+                    <input type="date" id="hari_tanggal" name="hari_tanggal" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">Waktu</label>
+                    <input type="text" id="waktu" name="waktu" class="form-input" placeholder="10.00 - 12.00 WIB">
+                </div>
+
+                <div class="form-group" id="tempat_group">
+                    <label class="form-label required">Tempat</label>
+                    <input type="text" id="tempat" name="tempat" class="form-input" placeholder="Ruang Rapat DJST">
+                </div>
+
+                <div class="form-group" id="media_group" style="display: none;">
+                    <label class="form-label required">Media</label>
+                    <input type="text" id="media" name="media" class="form-input" placeholder="Zoom">
+                </div>
+
+                <div class="form-group" id="rapat_id_group" style="display: none;">
+                    <label class="form-label">Rapat ID</label>
+                    <input type="text" id="rapat_id" name="rapat_id" class="form-input" placeholder="123456789">
+                </div>
+
+                <div class="form-group" id="sandi_group" style="display: none;">
+                    <label class="form-label">Kata Sandi</label>
+                    <input type="text" id="sandi" name="sandi" class="form-input" placeholder="abc123">
+                </div>
+
+                <div class="form-group" id="tautan_group" style="display: none;">
+                    <label class="form-label">Tautan</label>
+                    <input type="url" id="tautan" name="tautan" class="form-input" placeholder="https://zoom.us/j/123456">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">Agenda</label>
+                    <textarea id="agenda" name="agenda" class="form-textarea" placeholder="Deskripsi agenda rapat..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Narahubung</label>
+                    <input type="text" id="narahubung" name="narahubung" class="form-input" placeholder="Budi Santoso">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">No. Narahubung</label>
+                    <input type="text" id="no_narahubung" name="no_narahubung" class="form-input" placeholder="08123456789">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">Pilih Peserta Undangan</label>
                     <select id="pegawai" name="pegawai[]" multiple="multiple" required>
-                        <?php foreach ($daftarPegawai as $pegawai): ?>
-                            <option value="<?= htmlspecialchars($pegawai['nip']) ?>">
-                                <?= htmlspecialchars($pegawai['nama_pegawai']) ?> - <?= htmlspecialchars($pegawai['jabatan']) ?>
-                            </option>
+                        <?php foreach ($daftarPegawai as $p): ?>
+                            <option value="<?= htmlspecialchars($p['nip']) ?>"><?= htmlspecialchars($p['nama_pegawai']) ?> - <?= htmlspecialchars($p['jabatan']) ?></option>
                         <?php endforeach; ?>
                     </select>
                     
@@ -479,64 +519,36 @@ try {
                             <input type="text" class="form-input" id="nama_luar" placeholder="Nama Lengkap" style="flex: 1;">
                             <input type="text" class="form-input" id="jabatan_luar" placeholder="Jabatan/Instansi" style="flex: 1;">
                         </div>
-                        <button type="button" class="btn btn-secondary" id="tambah_luar" style="font-size: 12px; padding: 6px 12px;">
+                        <button type="button" class="btn btn-primary" id="tambah_luar" style="font-size: 12px; padding: 6px 12px;">
                             ➕ Tambah
                         </button>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label required">Tanggal Awal Kegiatan</label>
-                    <input type="date" id="tgl_mulai" name="tgl_mulai" class="form-input" value="2025-08-19" required>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label required">Tanggal Akhir Kegiatan</label>
-                    <input type="date" id="tgl_selesai" name="tgl_selesai" class="form-input" value="2025-08-20">
-                    <small style="color: #6b7280; font-size: 12px;">Opsional jika satu hari</small>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label required">Tempat Kegiatan</label>
-                    <textarea id="lokasi" name="lokasi" class="form-textarea" placeholder="Ruang Rapat Rektorat Lantai 9, Kampus Baru Depok, Universitas Indonesia, Jawa Barat 16424" required>Ruang Rapat Rektorat Lantai 9, Kampus Baru Depok, Universitas Indonesia, Jawa Barat 16424</textarea>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label required">Nomor dan Tanggal DIPA</label>
-                    <input type="text" id="dipa" name="dipa" class="form-input" placeholder="SP DIPA-139.05.1.693321/2025 tanggal 2 Desember 2024." value="SP DIPA-139.05.1.693321/2025 tanggal 2 Desember 2024">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label required">Nama Pejabat</label>
+                    <label class="form-label required">Pejabat Penandatangan</label>
                     <select id="nama_pejabat" name="nama_pejabat" class="form-select" required>
                         <option value="">Pilih Pejabat</option>
-                        <?php foreach ($pejabatList as $pejabat): ?>
-                            <option value="<?= htmlspecialchars($pejabat['nip']) ?>">
-                                <?= htmlspecialchars($pejabat['nama']) ?>
-                            </option>
+                        <?php foreach ($pejabatList as $pj): ?>
+                            <option value="<?= htmlspecialchars($pj['nip']) ?>"><?= htmlspecialchars($pj['nama']) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Tembusan (Opsional)</label>
-                    <textarea id="tembusan" name="tembusan" class="form-textarea" placeholder="Direktur Jenderal Sains dan Teknologi"></textarea>
+                    <label class="form-label">Tembusan</label>
+                    <textarea id="tembusan" name="tembusan" class="form-textarea" placeholder="Arsip\nKepala Bagian TU"></textarea>
                 </div>
 
                 <div class="form-buttons">
-                    <?php if ($databaseStatus === 'connected'): ?>
-                    <button type="submit" class="btn btn-success" name="action" value="export_word">📄 Download DOCX</button>
-                    <?php else: ?>
-                    <button type="button" class="btn btn-secondary" onclick="alert('Database tidak terhubung. Mohon perbaiki koneksi database untuk download DOCX.')">⚠️ Database Required</button>
-                    <?php endif; ?>
-                    <button type="reset" class="btn btn-secondary">🔄 Reset</button>
+                    <button type="submit" name="action" value="export_word" class="btn btn-success">📄 Export ke Word</button>
                 </div>
             </form>
         </div>
 
         <div class="preview-section">
             <div class="preview-header">
-                <h3>Preview Surat Tugas</h3>
+                <h3>Preview Surat Undangan</h3>
             </div>
             <div class="preview-content" id="previewContent">
                 <div class="preview-placeholder">
@@ -551,16 +563,14 @@ try {
         ✓ Preview diperbarui
     </div>
 
-    <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
-
     <script>
         $(document).ready(function() {
-            // Initialize Select2 for pegawai selection
+            // Initialize Select2
             $('#pegawai').select2({
-                placeholder: 'Pilih pegawai yang akan ditugaskan...',
+                placeholder: 'Pilih peserta undangan...',
                 allowClear: true,
                 width: '100%'
             });
@@ -594,87 +604,74 @@ try {
                 }
             });
 
-
-
-            // Function untuk generate preview
-            function generatePreview() {
-                const nomor_surat = $('#nomor_surat').val() || '001/ST/<?= date('Y') ?>';
-                const acara = $('#acara').val() || '[Acara belum diisi]';
-                const tglMulai = $('#tgl_mulai').val();
-                const tglSelesai = $('#tgl_selesai').val();
-                const lokasi = $('#lokasi').val() || '[Lokasi belum diisi]';
-                const dipa = $('#dipa').val() || 'SP DIPA-139.05.1.693321/2025 tanggal 2 Desember 2024';
-                const namaPejabat = $('#nama_pejabat option:selected').text() || '[Pejabat belum dipilih]';
-                const nipPejabat = $('#nama_pejabat').val() || '';
-                const tembusan = $('#tembusan').val();
-                
-                // Format tanggal
-                let tanggalFormatted = '[Tanggal belum diisi]';
-                if (tglMulai) {
-                    const startDate = new Date(tglMulai);
-                    const bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-                                  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-                    const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-                    
-                    if (tglSelesai && tglSelesai !== tglMulai) {
-                        const endDate = new Date(tglSelesai);
-                        tanggalFormatted = `${hari[startDate.getDay()]}-${hari[endDate.getDay()]}, ${startDate.getDate()}-${endDate.getDate()} ${bulan[startDate.getMonth()]} ${startDate.getFullYear()}`;
-                    } else {
-                        tanggalFormatted = `${hari[startDate.getDay()]}, ${startDate.getDate()} ${bulan[startDate.getMonth()]} ${startDate.getFullYear()}`;
-                    }
-                }
-                
-                // Get selected pegawai
-                const selectedPegawai = $('#pegawai').val() || [];
-                let pegawaiRows = '';
-                
-                if (selectedPegawai.length > 0) {
-                    selectedPegawai.forEach((nip, index) => {
-                        const option = $(`#pegawai option[value="${nip}"]`);
-                        const text = option.text();
-                        
-                        if (nip.startsWith('L|')) {
-                            // Pegawai eksternal
-                            const parts = nip.split('|');
-                            pegawaiRows += `
-                                <tr>
-                                    <td style="text-align: center; border: 1px solid #000; padding: 6px;">${index + 1}.</td>
-                                    <td style="border: 1px solid #000; padding: 6px;">
-                                        <strong>${parts[1] || 'Nama Eksternal'}</strong><br>
-                                        <em>Pegawai Eksternal</em>
-                                    </td>
-                                    <td style="border: 1px solid #000; padding: 6px;">${parts[2] || 'Jabatan Eksternal'}</td>
-                                </tr>
-                            `;
-                        } else {
-                            // Pegawai internal - cari data dari array
-                            const pegawaiData = findPegawaiByNip(nip);
-                            pegawaiRows += `
-                                <tr>
-                                    <td style="text-align: center; border: 1px solid #000; padding: 6px;">${index + 1}.</td>
-                                    <td style="border: 1px solid #000; padding: 6px;">
-                                        <strong>${pegawaiData.nama_pegawai}</strong><br>
-                                        ${pegawaiData.nip}<br>
-                                        ${pegawaiData.pangkat}, ${pegawaiData.golongan}
-                                    </td>
-                                    <td style="border: 1px solid #000; padding: 6px;">${pegawaiData.jabatan}</td>
-                                </tr>
-                            `;
-                        }
-                    });
+            // Toggle fields based on jenis_acara
+            $('#jenis_acara').change(function() {
+                const jenis = $(this).val();
+                if (jenis === 'online') {
+                    $('#tempat_group').hide();
+                    $('#media_group, #rapat_id_group, #sandi_group, #tautan_group').show();
                 } else {
-                    pegawaiRows = `
-                        <tr>
-                            <td colspan="3" style="text-align: center; font-style: italic; color: #666; border: 1px solid #000; padding: 6px;">
-                                Belum ada pegawai yang dipilih
-                            </td>
-                        </tr>
-                    `;
+                    $('#tempat_group').show();
+                    $('#media_group, #rapat_id_group, #sandi_group, #tautan_group').hide();
                 }
-                
-                // Template preview
+            });
+
+            // Generate preview
+            function generatePreview() {
+                const jenis_acara = $('#jenis_acara').val();
+                const hari_tanggal = $('#hari_tanggal').val();
+                const waktu = $('#waktu').val();
+                const tempat = $('#tempat').val();
+                const media = $('#media').val();
+                const rapat_id = $('#rapat_id').val();
+                const sandi = $('#sandi').val();
+                const tautan = $('#tautan').val();
+                const agenda = $('#agenda').val();
+                const narahubung = $('#narahubung').val();
+                const no_narahubung = $('#no_narahubung').val();
+                const tembusan = $('#tembusan').val();
+                const nip_pejabat = $('#nama_pejabat').val();
+                const nama_pejabat = nip_pejabat ? $('option:selected', '#nama_pejabat').text() : '';
+
+                // Format tanggal
+                let tanggalFormatted = '';
+                if (hari_tanggal) {
+                    const date = new Date(hari_tanggal);
+                    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                    tanggalFormatted = days[date.getDay()] + ', ' + date.getDate() + ' ' + months[date.getMonth()] + ' ' + date.getFullYear();
+                }
+
+                // Pegawai rows
+                let undanganRows = '';
+                const selectedPegawai = $('#pegawai').val() || [];
+                selectedPegawai.forEach((nip, index) => {
+                    const option = $(`#pegawai option[value="${nip}"]`);
+                    const text = option.text();
+                    
+                    if (nip.startsWith('L|')) {
+                        // Pegawai eksternal
+                        const parts = nip.split('|');
+                        undanganRows += `
+                            <tr>
+                                <td style="text-align: center; border: 1px solid #000; padding: 8px; width: 30px;">${index + 1}.</td>
+                                <td style="border: 1px solid #000; padding: 8px;">${parts[1] || 'Nama Eksternal'}, ${parts[2] || 'Jabatan Eksternal'}</td>
+                            </tr>
+                        `;
+                    } else {
+                        // Pegawai internal
+                        undanganRows += `
+                            <tr>
+                                <td style="text-align: center; border: 1px solid #000; padding: 8px; width: 30px;">${index + 1}.</td>
+                                <td style="border: 1px solid #000; padding: 8px;">${text}</td>
+                            </tr>
+                        `;
+                    }
+                });
+
                 const previewHTML = `
                     <div style="font-family: 'Times New Roman', serif; font-size: 11pt; line-height: 1.4; color: #000;">
+                        <!-- Header -->
                         <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #000; padding-bottom: 12px;">
                             <table style="width: 100%; border: none;">
                                 <tr>
@@ -698,79 +695,112 @@ try {
                                 </tr>
                             </table>
                         </div>
-                        
-                        <div style="text-align: center; font-weight: bold; font-size: 12pt; margin: 20px 0; text-decoration: underline;">
-                            <strong>SURAT TUGAS</strong><br>
-                            <span style="font-weight: normal; font-size: 10pt;">Nomor: </span>
+
+                        <!-- Nomor, Lampiran, Hal -->
+                        <div style="margin: 20px 0; font-size: 11pt;">
+                            <div><strong>Nomor</strong>: ___________________</div>
+                            <div><strong>Lampiran</strong>: satu lembar</div>
+                            <div><strong>Hal</strong>: Undangan</div>
                         </div>
-                        
-                        <div style="margin: 15px 0; text-align: justify; line-height: 1.5;">
-                            <p>Dalam rangka kegiatan ${acara}, dengan ini Sekretaris Direktorat Jenderal Sains dan Teknologi menugaskan kepada nama di bawah ini,</p>
+
+                        <!-- Yth. -->
+                        <div style="margin: 20px 0; font-size: 11pt;">
+                            <div style="font-weight: bold;">Yth. Peserta Kegiatan</div>
+                            <div>(daftar terlampir)</div>
                         </div>
-                        
-                        <table style="width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 10pt;">
-                            <thead>
-                                <tr>
-                                    <th style="width: 40px; border: 1px solid #000; padding: 6px; background-color: #f5f5f5; text-align: center;">No.</th>
-                                    <th style="width: 50%; border: 1px solid #000; padding: 6px; background-color: #f5f5f5; text-align: center;">Nama, NIP, Pangkat dan Golongan</th>
-                                    <th style="width: 45%; border: 1px solid #000; padding: 6px; background-color: #f5f5f5; text-align: center;">Jabatan</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${pegawaiRows}
-                            </tbody>
+
+                        <!-- Isi -->
+                        <div style="text-align: justify; line-height: 1.5; margin: 15px 0;">
+                            <p>Dalam rangka membangun <em>${agenda || 'agenda'}</em>, kami bermaksud menyelenggarakan rapat yang ditujukan bagi para dosen dan peneliti. Sehubungan dengan hal tersebut, kami mengundang Bapak/Ibu untuk berkenan hadir dan berpartisipasi dalam rapat yang akan dilaksanakan pada</p>
+                        </div>
+
+                        <!-- Detail Acara -->
+                        <table style="width: 100%; margin: 10px 0;">
+                            <tr>
+                                <td style="width: 120px; vertical-align: top;">hari, tanggal</td>
+                                <td style="width: 10px; vertical-align: top;">:</td>
+                                <td style="vertical-align: top;">${tanggalFormatted}</td>
+                            </tr>
+                            <tr>
+                                <td style="vertical-align: top;">waktu</td>
+                                <td style="vertical-align: top;">:</td>
+                                <td style="vertical-align: top;">${waktu}</td>
+                            </tr>
+                            ${jenis_acara === 'online' ? `
+                            <tr>
+                                <td style="vertical-align: top;">media</td>
+                                <td style="vertical-align: top;">:</td>
+                                <td style="vertical-align: top;">${media}</td>
+                            </tr>
+                            ${rapat_id ? `<tr><td style="vertical-align: top;">rapat id</td><td>:</td><td>${rapat_id}</td></tr>` : ''}
+                            ${sandi ? `<tr><td style="vertical-align: top;">kata sandi</td><td>:</td><td>${sandi}</td></tr>` : ''}
+                            ${tautan ? `<tr><td style="vertical-align: top;">tautan</td><td>:</td><td><a href="${tautan}">${tautan}</a></td></tr>` : ''}
+                            ` : `
+                            <tr>
+                                <td style="vertical-align: top;">tempat</td>
+                                <td style="vertical-align: top;">:</td>
+                                <td style="vertical-align: top;">${tempat}</td>
+                            </tr>
+                            `}
+                            <tr>
+                                <td style="vertical-align: top;">agenda</td>
+                                <td style="vertical-align: top;">:</td>
+                                <td style="vertical-align: top;">${agenda.replace(/\n/g, '<br>')}</td>
+                            </tr>
                         </table>
-                        
+
+                        <!-- Penutup -->
                         <div style="margin: 15px 0; text-align: justify; line-height: 1.5;">
-                            <p>Untuk hadir dan melaksanakan tugas dalam kegiatan dimaksud yang akan diselenggarakan pada hari ${tanggalFormatted}, bertempat di ${lokasi}</p>
-                            
-                            <p>Biaya kegiatan dibebankan kepada DIPA Satuan Kerja Direktorat Jenderal Sains dan Teknologi, Nomor: ${dipa}.</p>
-                            
-                            <p>Surat tugas ini dibuat untuk dilaksanakan dengan penuh tanggung jawab dan yang bersangkutan diharapkan membuat laporan.</p>
+                            <p>Besar harapan kami Bapak/Ibu dapat meluangkan waktu untuk hadir dalam rapat dimaksud guna memberikan pemahaman yang lebih mendalam mengenai pentingnya integritas akademik, khususnya dalam pengelolaan jurnal ilmiah, serta memperkuat kolaborasi antar civitas akademika dan lembaga riset.</p>
+                            <p>Untuk informasi lebih lanjut mengenai rapat dan konfirmasi kehadiran, tim Bapak/Ibu dapat menghubungi ${narahubung} di nomor ${no_narahubung}.</p>
+                            <p>Demikian surat ini kami sampaikan. Atas perhatian dan kerja sama yang baik, kami ucapkan terima kasih.</p>
                         </div>
-                        
+
+                        <!-- TTD -->
                         <div style="margin-top: 30px; display: table; width: 100%;">
                             <div style="display: table-cell; width: 50%; vertical-align: top;"></div>
                             <div style="display: table-cell; width: 50%; text-align: center; vertical-align: top;">
                                 <div style="margin-bottom: 12px;">Sekretaris,</div>
                                 <div style="margin: 60px 0 12px 0;"></div>
-                                <div style="font-weight: bold;">${namaPejabat}</div>
-                                <div style="font-size: 9pt;">NIP ${nipPejabat}</div>
+                                <div style="font-weight: bold;">${nama_pejabat}</div>
+                                <div style="font-size: 9pt;">NIP ${nip_pejabat}</div>
                             </div>
                         </div>
-                        
+
                         ${tembusan ? `
                         <div style="margin-top: 30px; clear: both;">
                             <strong>Tembusan:</strong><br>
                             ${tembusan.replace(/\n/g, '<br>')}
                         </div>
                         ` : ''}
+
+                        <!-- Lampiran -->
+                        <div style="page-break-before: always; margin-top: 30px;">
+                            <div style="text-align: center; font-weight: bold; font-size: 12pt; margin-bottom: 20px;">
+                                Lampiran<br>
+                                Nomor: ___________________<br>
+                                Tanggal: ${tanggalFormatted}
+                            </div>
+                            <div style="margin-bottom: 15px; text-align: center; font-weight: bold;">
+                                <em>Yth.</em>
+                            </div>
+                            <table style="width: 100%; border-collapse: collapse; margin: 12px 0;">
+                                <thead>
+                                    <tr>
+                                        <th style="border: 1px solid #000; padding: 8px; background-color: #f5f5f5; text-align: center; width: 30px;">No.</th>
+                                        <th style="border: 1px solid #000; padding: 8px; background-color: #f5f5f5; text-align: center;">Nama dan Jabatan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${undanganRows || '<tr><td colspan="2" style="text-align: center; font-style: italic; color: #666; border: 1px solid #000; padding: 8px;">Belum ada yang diundang</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 `;
                 
                 $('#previewContent').html(previewHTML);
             }
-            
-            // Function untuk mencari data pegawai berdasarkan NIP
-            function findPegawaiByNip(nip) {
-                const pegawaiData = <?= json_encode($daftarPegawai) ?>;
-                return pegawaiData.find(p => p.nip === nip) || {
-                    nama_pegawai: 'Data tidak ditemukan',
-                    nip: nip,
-                    pangkat: '-',
-                    golongan: '-',
-                    jabatan: '-'
-                };
-            }
-
-            // Auto preview on form change (debounced)
-            let previewTimeout;
-            $('#suratTugasForm input, #suratTugasForm textarea, #suratTugasForm select').on('input change', function() {
-                clearTimeout(previewTimeout);
-                previewTimeout = setTimeout(function() {
-                    generatePreview();
-                }, 1000);
-            });
 
             // Show update indicator function
             function showUpdateIndicator() {
@@ -781,36 +811,23 @@ try {
                 }, 1500);
             }
 
-            // Load preview saat halaman pertama kali dibuka
-            setTimeout(function() {
-                generatePreview();
-                showUpdateIndicator();
-            }, 500);
+
 
             // Auto preview on form change
-            $('#suratTugasForm input, #suratTugasForm textarea, #suratTugasForm select').on('input change', function() {
+            let previewTimeout;
+            $('#suratUndanganForm input, #suratUndanganForm textarea, #suratUndanganForm select').on('input change', function() {
                 clearTimeout(previewTimeout);
-                previewTimeout = setTimeout(function() {
+                previewTimeout = setTimeout(() => {
                     generatePreview();
                     showUpdateIndicator();
                 }, 1000);
             });
 
-            // Form validation
-            $('#suratTugasForm').on('submit', function(e) {
-                const pegawai = $('#pegawai').val();
-                if (!pegawai || pegawai.length === 0) {
-                    e.preventDefault();
-                    alert('Mohon pilih minimal satu pegawai yang akan ditugaskan');
-                    return false;
-                }
-            });
-
-            // Set tanggal selesai minimal sama dengan tanggal mulai
-            $('#tgl_mulai').change(function() {
-                const tglMulai = $(this).val();
-                $('#tgl_selesai').attr('min', tglMulai);
-            });
+            // Initial preview
+            setTimeout(() => {
+                generatePreview();
+                showUpdateIndicator();
+            }, 500);
 
             // Add smooth animations on load
             $('.form-group').each(function(index) {
@@ -826,6 +843,16 @@ try {
                         'transform': 'translateY(0)'
                     });
                 }, index * 100);
+            });
+
+            // Form validation
+            $('#suratUndanganForm').on('submit', function(e) {
+                const pegawai = $('#pegawai').val();
+                if (!pegawai || pegawai.length === 0) {
+                    e.preventDefault();
+                    alert('Mohon pilih minimal satu peserta undangan');
+                    return false;
+                }
             });
         });
     </script>
