@@ -1,271 +1,251 @@
 <?php
 require_once __DIR__ . '/BaseController.php';
-require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../models/Pegawai.php';
 require_once __DIR__ . '/../helpers/utils.php';
-require_once __DIR__ . '/../helpers/PegawaiHelper.php';
+require_once __DIR__ . '/../helpers/link_formatter.php';
+
+// Load Composer autoloader
+$autoloadPath = __DIR__ . '/../vendor/autoload.php';
+if (!file_exists($autoloadPath)) {
+    throw new Exception('Composer autoload not found. Run: composer install');
+}
+require_once $autoloadPath;
+
+use PhpOffice\PhpWord\TemplateProcessor;
+use PhpOffice\PhpWord\Settings;
 
 class SuratUndanganController extends BaseController {
     public function exportWord() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['action']) || $_POST['action'] !== 'export_word') {
             return $this->jsonResponse(['error' => 'Invalid request'], 400);
         }
-    try {
-        // Get database connection
-        $database = new Database();
-        $db = $database->getConnection();
-        
-        // Get POST data
-        $selectedPegawai = $_POST['pegawai'] ?? [];
-        $nomor_surat = $_POST['nomor_surat'] ?? ('001/UN/' . date('Y'));
-        $rangka = $_POST['rangka'] ?? '';
-        $hari_tanggal = $_POST['hari_tanggal'] ?? '';
-        $waktu = $_POST['waktu'] ?? '';
-        $media = $_POST['media'] ?? '';
-        $rapat_id = $_POST['rapat_id'] ?? '';
-        $sandi = $_POST['sandi'] ?? '';
-        $tautan = $_POST['tautan'] ?? '';
-        $agenda = $_POST['agenda'] ?? '';
-        $narahubung = $_POST['narahubung'] ?? '';
-        $no_narahubung = $_POST['no_narahubung'] ?? '';
-        $tembusan = $_POST['tembusan'] ?? '';
-        $nip_pejabat = $_POST['nama_pejabat'] ?? '';
-        
-        // Get data pejabat dari hardcoded list
-        $namaPejabat = '';
-        $nipPejabat = $nip_pejabat;
-        
-        // Get pejabat data using utils function
-        $pejabatList = array_column(getNamaPejabatList(), 'nama', 'nip');
-        $namaPejabat = $pejabatList[$nip_pejabat] ?? '';
-        
-        // Get pegawai data untuk daftar undangan
-        $daftarPegawai = [];
-        foreach ($selectedPegawai as $nipPegawai) {
-            if (strpos($nipPegawai, 'L|') === 0) {
-                // Pegawai eksternal
-                $parts = explode('|', $nipPegawai);
-                $daftarPegawai[] = [
-                    'nama_pegawai' => $parts[1] ?? 'Nama Eksternal',
-                    'jabatan' => $parts[2] ?? 'Jabatan Eksternal',
-                    'is_external' => true
-                ];
-            } else {
-                // Pegawai internal
-                $stmt = $db->prepare("SELECT * FROM pegawai WHERE nip = ?");
-                $stmt->execute([$nipPegawai]);
-                $pegawai = $stmt->fetch(PDO::FETCH_ASSOC);
-                if ($pegawai) {
-                    $pegawai['is_external'] = false;
-                    $daftarPegawai[] = $pegawai;
+
+        try {
+            $database = new Database();
+            $db = $database->getConnection();
+
+            // Debug: Log data POST
+            error_log('POST data: ' . print_r($_POST, true));
+
+            // Ambil data dari POST
+            $selectedPegawai = $_POST['pegawai'] ?? [];
+            
+            // Validasi input
+            if (empty($selectedPegawai)) {
+                throw new Exception('Tidak ada peserta yang dipilih');
+            }
+            $acara = $_POST['acara'] ?? '';
+            $tanggal = $_POST['tanggal'] ?? '';
+            $waktuAwal = $_POST['waktu_awal'] ?? '';
+            $waktuAkhir = $_POST['waktu_akhir'] ?? '';
+            $lokasi = $_POST['lokasi'] ?? '';
+            $agenda = $_POST['agenda'] ?? '';
+            $tembusan = $_POST['tembusan'] ?? '';
+            $nip_pejabat = $_POST['nama_pejabat'] ?? '';
+            $jabatanPejabat = $_POST['jabatan_pejabat'] ?? '';
+
+            // Jenis undangan
+            $jenisUndangan = $_POST['jenis_undangan'] ?? 'offline'; 
+
+            // Tambahan khusus online
+            $media = $_POST['media'] ?? '';
+            $rapatId = $_POST['rapat_id'] ?? '';
+            $kataSandi = $_POST['kata_sandi'] ?? '';
+            $tautan = $_POST['tautan'] ?? '';
+
+            // Narahubung dan data opsional
+            $narahubung = $_POST['narahubung'] ?? '';
+            $noNarahubung = $_POST['no_narahubung'] ?? '';
+            $gender = $_POST['gender'] ?? 'Saudara'; 
+            $kalimatOpsional = $_POST['kalimat_opsional'] ?? '';
+
+            // Ambil pejabat
+            $pejabatList = array_column(getNamaPejabatList(), 'nama', 'nip');
+            $namaPejabat = $pejabatList[$nip_pejabat] ?? '';
+            $nipPejabat = $nip_pejabat;
+            
+            // Format tanggal Indonesia
+            $tanggalFormatted = formatTanggalIndonesia($tanggal);
+            
+            // Format waktu dengan default "selesai"
+            $waktuFormatted = formatWaktuUndangan($waktuAwal, $waktuAkhir);
+
+            // Ambil pegawai
+            $daftarPegawai = [];
+            foreach ($selectedPegawai as $nipPegawai) {
+                if (strpos($nipPegawai, 'L|') === 0) {
+                    $parts = explode('|', $nipPegawai);
+                    $daftarPegawai[] = [
+                        'nama_pegawai' => $parts[1] ?? 'Nama Eksternal',
+                        'nip' => '-',
+                        'pangkat' => '-',
+                        'golongan' => '-',
+                        'jabatan' => $parts[2] ?? 'Jabatan Eksternal',
+                        'is_external' => true
+                    ];
+                } else {
+                    $stmt = $db->prepare("SELECT * FROM pegawai WHERE nip = ?");
+                    $stmt->execute([$nipPegawai]);
+                    $pegawai = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if ($pegawai) {
+                        $pegawai['is_external'] = false;
+                        $daftarPegawai[] = $pegawai;
+                    }
                 }
             }
-        }
-        
-        // Format tanggal using utils function
-        $tanggalFormatted = formatTanggalRange($hari_tanggal, $hari_tanggal);
-        
-        // Build daftar undangan
-        $undanganRows = '';
-        $no = 1;
-        foreach ($daftarPegawai as $pegawai) {
-            $undanganRows .= '<tr>
-                <td style="text-align: center; border: 1px solid #000; padding: 8px; width: 30px;">' . $no++ . '.</td>
-                <td style="border: 1px solid #000; padding: 8px;">' . htmlspecialchars($pegawai['nama_pegawai']) . ', ' . htmlspecialchars($pegawai['jabatan']) . '</td>
-            </tr>';
-        }
-        
-        if (empty($undanganRows)) {
-            $undanganRows = '<tr><td colspan="2" style="text-align: center; font-style: italic; color: #666; border: 1px solid #000; padding: 8px;">Belum ada yang diundang</td></tr>';
-        }
-        
-        $html = '<!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Surat Undangan</title>
-            <style>
-                body { font-family: "Times New Roman", serif; font-size: 11pt; line-height: 1.4; color: #000; margin: 20px; }
-                table { border-collapse: collapse; }
-                .header-table { width: 100%; border: none; margin-bottom: 25px; }
-                .content-table { width: 100%; margin: 10px 0; }
-            </style>
-        </head>
-        <body>
-            <div style="font-family: \'Times New Roman\', serif; font-size: 11pt; line-height: 1.4; color: #000;">
-                <!-- Header -->
-                <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #000; padding-bottom: 12px;">
-                    <table class="header-table">
-                        <tr>
-                            <td style="width: 70px; border: none; text-align: center; vertical-align: middle;">
-                                <div style="width: 60px; height: 60px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; font-size: 7pt; color: #666;">
-                                    LOGO<br>KEMENDIKTI
-                                </div>
-                            </td>
-                            <td style="border: none; text-align: center; vertical-align: middle;">
-                                <div style="font-size: 11pt; font-weight: bold; line-height: 1.2;">
-                                    KEMENTERIAN PENDIDIKAN TINGGI, SAINS,<br>
-                                    DAN TEKNOLOGI<br>
-                                    <strong>DIREKTORAT JENDERAL SAINS DAN TEKNOLOGI</strong>
-                                </div>
-                                <div style="font-size: 9pt; margin-top: 6px; line-height: 1.3;">
-                                    Jalan Jenderal Sudirman, Senayan, Jakarta 10270<br>
-                                    Telepon (021) 57946104, Pusat Panggilan ULT DIKTI 126<br>
-                                    Laman <span style="text-decoration: underline;">www.kemdiktisaintek.go.id</span>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-                
-                <!-- Nomor dan Lampiran -->
-                <table style="width: 100%; margin-bottom: 20px;">
-                    <tr>
-                        <td style="width: 80px; vertical-align: top;">Nomor</td>
-                        <td style="width: 10px; vertical-align: top;">:</td>
-                        <td style="vertical-align: top;"></td>
-                    </tr>
-                    <tr>
-                        <td style="vertical-align: top;">Lampiran</td>
-                        <td style="vertical-align: top;">:</td>
-                        <td style="vertical-align: top;">satu lembar</td>
-                    </tr>
-                    <tr>
-                        <td style="vertical-align: top;">Hal</td>
-                        <td style="vertical-align: top;">:</td>
-                        <td style="vertical-align: top; font-weight: bold;">Undangan</td>
-                    </tr>
-                </table>
-                
-                <!-- Kepada Yth -->
-                <div style="margin: 20px 0;">
-                    <strong>Yth. Peserta Kegiatan</strong><br>
-                    (daftar terlampir)
-                </div>
-                
-                <!-- Isi Surat -->
-                <div style="margin: 15px 0; text-align: justify; line-height: 1.5;">
-                    <p>Dalam rangka membangun <em>' . htmlspecialchars($agenda) . '</em> di Perguruan Tinggi/Lembaga Riset, kami bermaksud menyelenggarakan rapat yang ditujukan bagi para dosen dan peneliti. Sehubungan dengan hal tersebut, kami mengundang Bapak/Ibu untuk berkenan hadir dan berpartisipasi dalam rapat yang akan dilaksanakan pada</p>
-                </div>
-                
-                <!-- Detail Kegiatan -->
-                <table class="content-table">
-                    <tr>
-                        <td style="width: 80px; vertical-align: top;">hari, tanggal</td>
-                        <td style="width: 10px; vertical-align: top;">:</td>
-                        <td style="vertical-align: top;">' . $tanggalFormatted . '</td>
-                    </tr>
-                    <tr>
-                        <td style="vertical-align: top;">waktu</td>
-                        <td style="vertical-align: top;">:</td>
-                        <td style="vertical-align: top;">' . htmlspecialchars($waktu) . '</td>
-                    </tr>
-                    <tr>
-                        <td style="vertical-align: top;">media</td>
-                        <td style="vertical-align: top;">:</td>
-                        <td style="vertical-align: top;">' . htmlspecialchars($media) . '</td>
-                    </tr>';
+
+            // Pilih template
+            if ($jenisUndangan === 'online') {
+                $templatePath = __DIR__ . '/../templates/template_surat_undangan_online.docx';
+            } else {
+                $templatePath = __DIR__ . '/../templates/template_surat_undangan_offline.docx';
+            }
+
+            if (!file_exists($templatePath)) {
+                throw new Exception('Template file not found: ' . $templatePath);
+            }
+
+            // Temp dir
+            $tempDir = __DIR__ . '/../temp';
+            if (!is_dir($tempDir)) {
+                mkdir($tempDir, 0777, true);
+            }
+            Settings::setTempDir($tempDir);
+
+            $workingTemplate = $tempDir . '/' . uniqid('template_') . '.docx';
+            copy($templatePath, $workingTemplate);
+
+            $templateProcessor = new TemplateProcessor($workingTemplate);
+
+            // Ambil daftar placeholder yang tersedia
+            $variables = $templateProcessor->getVariables();
+            
+            // Validasi template memiliki placeholder yang diperlukan
+            $requiredPlaceholders = ['ACARA', 'TANGGAL', 'AGENDA', 'NAMA_PEJABAT'];
+            
+            // Cek format pegawai - harus ada salah satu
+            $hasPegawaiPlaceholder = in_array('DATA_PEGAWAI', $variables) || 
+                                   (in_array('no', $variables) && in_array('nama_jabatan', $variables));
+            
+            if (!$hasPegawaiPlaceholder) {
+                $requiredPlaceholders[] = 'DATA_PEGAWAI atau (no + nama_jabatan)';
+            }
+            
+            $missingPlaceholders = array_diff($requiredPlaceholders, $variables);
+            if (!empty($missingPlaceholders) && !$hasPegawaiPlaceholder) {
+                throw new Exception('Template tidak valid. Missing placeholders: ' . implode(', ', $missingPlaceholders));
+            }
+
+            // Isi placeholder umum
+            $templateProcessor->setValue('ACARA', $acara);
+            $templateProcessor->setValue('TANGGAL', $tanggalFormatted);
+            $templateProcessor->setValue('WAKTU_AWAL', $waktuAwal);
+            // Cek placeholder waktu akhir (ada typo di beberapa template)
+            if (in_array('WAKTU_AKHIR', $variables)) {
+                $templateProcessor->setValue('WAKTU_AKHIR', $waktuFormatted);
+            } elseif (in_array('WKTU_AKHIR', $variables)) {
+                $templateProcessor->setValue('WKTU_AKHIR', $waktuFormatted);
+            }
+            $templateProcessor->setValue('AGENDA', $agenda);
+            $templateProcessor->setValue('NAMA_PEJABAT', $namaPejabat);
+            $templateProcessor->setValue('NIP_PEJABAT', $nipPejabat);
+            $templateProcessor->setValue('TEMBUSAN', $tembusan ?: '');
+            $templateProcessor->setValue('JABATAN_PEJABAT', $jabatanPejabat);
+            $templateProcessor->setValue('KALIMAT_OPSIONAL', $kalimatOpsional ?: '');
+            $templateProcessor->setValue('NARAHUBUNG', $narahubung ?: '');
+            $templateProcessor->setValue('NO_NARAHUBUNG', $noNarahubung ?: '');
+            $templateProcessor->setValue('GENDER', $gender);
+
+            // Placeholder khusus berdasarkan jenis
+            if ($jenisUndangan === 'online') {
+                $templateProcessor->setValue('MEDIA', $media);
+                $templateProcessor->setValue('RAPAT_ID', $rapatId);
+                $templateProcessor->setValue('KATA_SANDI', $kataSandi);
+                $templateProcessor->setValue('TAUTAN', formatTautanOnline($tautan));
+            } else {
+                $templateProcessor->setValue('LOKASI', $lokasi);
+            }
+
+            // Debug: Cek format template
+            error_log('Available variables: ' . print_r($variables, true));
+            error_log('DATA_PEGAWAI exists: ' . (in_array('DATA_PEGAWAI', $variables) ? 'YES' : 'NO'));
+            error_log('Old format (no+nama_jabatan) exists: ' . ((in_array('no', $variables) && in_array('nama_jabatan', $variables)) ? 'YES' : 'NO'));
+            error_log('Daftar pegawai count: ' . count($daftarPegawai));
+            
+            // Isi daftar pegawai - cek format template
+            if (count($daftarPegawai) > 0) {
+                // Cek apakah template menggunakan format lama atau baru
+                if (in_array('DATA_PEGAWAI', $variables)) {
+                    // Format baru: satu placeholder untuk semua data
+                    $daftarPegawaiText = "";
+                    foreach ($daftarPegawai as $index => $pegawai) {
+                        $no = $index + 1;
+                        $namaJabatan = $pegawai['nama_pegawai'];
+                        if (!empty($pegawai['jabatan'])) {
+                            $namaJabatan .= ', ' . $pegawai['jabatan'];
+                        }
+                        $daftarPegawaiText .= $no . ". " . $namaJabatan . "\r\n";
+                    }
                     
-        if (!empty($rapat_id)) {
-            $html .= '
-                    <tr>
-                        <td style="vertical-align: top;">rapat id</td>
-                        <td style="vertical-align: top;">:</td>
-                        <td style="vertical-align: top;">' . htmlspecialchars($rapat_id) . '</td>
-                    </tr>';
-        }
-        
-        if (!empty($sandi)) {
-            $html .= '
-                    <tr>
-                        <td style="vertical-align: top;">kata sandi</td>
-                        <td style="vertical-align: top;">:</td>
-                        <td style="vertical-align: top;">' . htmlspecialchars($sandi) . '</td>
-                    </tr>';
-        }
-        
-        if (!empty($tautan)) {
-            $html .= '
-                    <tr>
-                        <td style="vertical-align: top;">tautan</td>
-                        <td style="vertical-align: top;">:</td>
-                        <td style="vertical-align: top;">' . htmlspecialchars($tautan) . '</td>
-                    </tr>';
-        }
-        
-        $html .= '
-                    <tr>
-                        <td style="vertical-align: top;">agenda</td>
-                        <td style="vertical-align: top;">:</td>
-                        <td style="vertical-align: top;">' . nl2br(htmlspecialchars($agenda)) . '</td>
-                    </tr>
-                </table>
-                
-                <!-- Penutup -->
-                <div style="margin: 15px 0; text-align: justify; line-height: 1.5;">
-                    <p>Besar harapan kami Bapak/Ibu dapat meluangkan waktu untuk hadir dalam rapat dimaksud guna memberikan pemahaman yang lebih mendalam mengenai pentingnya integritas akademik, khususnya dalam pengelolaan jurnal ilmiah, serta memperkuat kolaborasi antar civitas akademika dan lembaga riset.</p>
+                    error_log('Data pegawai text: ' . $daftarPegawaiText);
+                    $templateProcessor->setValue('DATA_PEGAWAI', $daftarPegawaiText);
                     
-                    <p>Untuk informasi lebih lanjut mengenai rapat dan konfirmasi kehadiran, tim Bapak/Ibu dapat menghubungi ' . htmlspecialchars($narahubung) . ' kami melalui Saudara ' . htmlspecialchars($narahubung) . ' di nomor gawai ' . htmlspecialchars($no_narahubung) . '.</p>
+                } elseif (in_array('no', $variables) && in_array('nama_jabatan', $variables)) {
+                    // Format lama: clone untuk setiap pegawai
+                    $templateProcessor->cloneRow('no', count($daftarPegawai));
                     
-                    <p>Demikian surat ini kami sampaikan. Atas perhatian dan kerja sama yang baik, kami ucapkan terima kasih.</p>
-                </div>
-                
-                <!-- Tanda Tangan -->
-                <div style="margin-top: 30px; display: table; width: 100%;">
-                    <div style="display: table-cell; width: 50%; vertical-align: top;"></div>
-                    <div style="display: table-cell; width: 50%; text-align: center; vertical-align: top;">
-                        <div style="margin-bottom: 12px;">Sekretaris,</div>
-                        <div style="margin: 60px 0 12px 0;"></div>
-                        <div style="font-weight: bold;">' . htmlspecialchars($namaPejabat) . '</div>
-                        <div style="font-size: 9pt;">NIP ' . htmlspecialchars($nipPejabat) . '</div>
-                    </div>
-                </div>';
-                
-        if (!empty($tembusan)) {
-            $html .= '
-                <div style="margin-top: 30px; clear: both;">
-                    <strong>Tembusan:</strong><br>
-                    ' . nl2br(htmlspecialchars($tembusan)) . '
-                </div>';
+                    foreach ($daftarPegawai as $index => $pegawai) {
+                        $rowIndex = $index + 1;
+                        $templateProcessor->setValue('no#' . $rowIndex, $rowIndex);
+                        
+                        $namaJabatan = $pegawai['nama_pegawai'];
+                        if (!empty($pegawai['jabatan'])) {
+                            $namaJabatan .= ', ' . $pegawai['jabatan'];
+                        }
+                        $templateProcessor->setValue('nama_jabatan#' . $rowIndex, $namaJabatan);
+                    }
+                }
+            } else {
+                // Tidak ada peserta
+                if (in_array('DATA_PEGAWAI', $variables)) {
+                    $templateProcessor->setValue('DATA_PEGAWAI', 'Tidak ada peserta');
+                } elseif (in_array('no', $variables)) {
+                    $templateProcessor->setValue('no', '1');
+                    $templateProcessor->setValue('nama_jabatan', 'Tidak ada peserta');
+                }
+            }
+
+            // Nama file output
+            $filename = 'surat_undangan_' . $jenisUndangan . '_' . date('Y-m-d') . '.docx';
+            $outputFile = $tempDir . '/' . uniqid('output_') . '.docx';
+            $templateProcessor->saveAs($outputFile);
+
+            // Download
+            header('Content-Description: File Transfer');
+            header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            header('Content-Length: ' . filesize($outputFile));
+            header('Cache-Control: max-age=0');
+
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+            
+            readfile($outputFile);
+
+            // Cleanup
+            if (file_exists($workingTemplate)) {
+                unlink($workingTemplate);
+            }
+            if (file_exists($outputFile)) {
+                unlink($outputFile);
+            }
+
+            exit;
+
+        } catch (Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
         }
-        
-        // Lampiran daftar undangan
-        $html .= '
-                <div style="page-break-before: always; margin-top: 30px;">
-                    <div style="text-align: center; font-weight: bold; font-size: 12pt; margin-bottom: 20px;">
-                        Lampiran<br>
-                        Nomor: <br>
-                        Tanggal: ' . $tanggalFormatted . '
-                    </div>
-                    
-                    <div style="margin-bottom: 15px; text-align: center; font-weight: bold;">
-                        <em>Yth.</em>
-                    </div>
-                    
-                    <table style="width: 100%; border-collapse: collapse; margin: 12px 0;">
-                        <thead>
-                            <tr>
-                                <th style="border: 1px solid #000; padding: 8px; background-color: #f5f5f5; text-align: center; width: 30px;">No.</th>
-                                <th style="border: 1px solid #000; padding: 8px; background-color: #f5f5f5; text-align: center;">Nama dan Jabatan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ' . $undanganRows . '
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </body>
-        </html>';
-        
-        // Download file using BaseController method
-        $filename = 'surat_undangan_' . date('Y-m-d') . '.doc';
-        $this->downloadFile($html, $filename);
-        
-    } catch (Exception $e) {
-        return $this->jsonResponse(['error' => $e->getMessage()], 500);
-    }
     }
 }
 

@@ -22,6 +22,13 @@ function formatTanggalRange($tglMulai, $tglSelesai) {
     $start = strtotime($tglMulai);
     $end   = !empty($tglSelesai) ? strtotime($tglSelesai) : $start;
 
+    // 🔹 Validasi: tanggal akhir tidak boleh sebelum tanggal awal
+    if ($end < $start) {
+        return 'Error: Tanggal akhir tidak boleh sebelum tanggal awal';
+        // atau bisa juga otomatis disamakan dengan tanggal awal:
+        // $end = $start;
+    }
+
     $hari1 = $hariIndo[date('l', $start)];
     $hari2 = $hariIndo[date('l', $end)];
 
@@ -37,13 +44,47 @@ function formatTanggalRange($tglMulai, $tglSelesai) {
     // Jika bulan dan tahun sama
     if ($bln1 === $bln2 && $thn1 === $thn2) {
         if ($tgl1 === $tgl2) {
-            return "$hari1,tanggal $tgl1 $bln1 $thn1";
+            return "$hari1, tanggal $tgl1 $bln1 $thn1";
         } else {
-            return "$hari1–$hari2, tanggal $tgl1–$tgl2 $bln1 $thn1";
+            return "$hari1-$hari2, tanggal $tgl1-$tgl2 $bln1 $thn1";
         }
     } else {
-        return "$hari1, tanggal $tgl1 $bln1 $thn1 – $hari2, $tgl2 $bln2 $thn2";
+        return "$hari1, tanggal $tgl1 $bln1 $thn1 - $hari2, $tgl2 $bln2 $thn2";
     }
+}
+
+function formatTanggalIndonesia($tanggal) {
+    if (empty($tanggal)) return '';
+    
+    $bulanIndo = [
+        1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+             'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    
+    $hariIndo = [
+        'Sunday' => 'Minggu',
+        'Monday' => 'Senin',
+        'Tuesday' => 'Selasa',
+        'Wednesday' => 'Rabu',
+        'Thursday' => 'Kamis',
+        'Friday' => 'Jumat',
+        'Saturday' => 'Sabtu'
+    ];
+    
+    $timestamp = strtotime($tanggal);
+    $hari = $hariIndo[date('l', $timestamp)];
+    $tgl = date('j', $timestamp);
+    $bulan = $bulanIndo[(int)date('n', $timestamp)];
+    $tahun = date('Y', $timestamp);
+    
+    return "$hari, $tgl $bulan $tahun";
+}
+
+function formatWaktuUndangan($waktuAwal, $waktuAkhir = '') {
+    if (empty($waktuAkhir) || strtolower(trim($waktuAkhir)) === 'selesai') {
+        return 'selesai';
+    }
+    return $waktuAkhir;
 }
 
 //Data dropdown Pejabat Pendatanganan

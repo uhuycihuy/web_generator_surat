@@ -456,7 +456,7 @@ try {
             <form id="suratTugasForm" method="POST" action="../backend/controllers/SuratTugasController.php">
                 <div class="form-group">
                     <label class="form-label required">Kegiatan/Acara</label>
-                    <textarea id="acara" name="acara" class="form-textarea" placeholder="Rekonsiliasi Kebutuhan dan Penyusunan Prognosis Anggaran Sekretariat Direktorat Jenderal Sains dan Teknologi ..." required>Rekonsiliasi Kebutuhan dan Penyusunan Prognosis Anggaran Sekretariat Direktorat Jenderal Sains dan Teknologi</textarea>
+                    <textarea id="acara" name="acara" class="form-textarea" placeholder="Contoh: Rekonsiliasi Kebutuhan dan Penyusunan Prognosis Anggaran Sekretariat Direktorat Jenderal Sains dan Teknologi" required></textarea>
                 </div>
 
                 <div class="form-group">
@@ -498,7 +498,7 @@ try {
 
                 <div class="form-group">
                     <label class="form-label required">Tempat Kegiatan</label>
-                    <textarea id="lokasi" name="lokasi" class="form-textarea" placeholder="Ruang Rapat Rektorat Lantai 9, Kampus Baru Depok, Universitas Indonesia, Jawa Barat 16424" required>Ruang Rapat Rektorat Lantai 9, Kampus Baru Depok, Universitas Indonesia, Jawa Barat 16424</textarea>
+                    <textarea id="lokasi" name="lokasi" class="form-textarea" placeholder="Contoh: Ruang Rapat Rektorat Lantai 9, Kampus Baru Depok, Universitas Indonesia, Jawa Barat 16424" required></textarea>
                 </div>
 
                 <div class="form-group">
@@ -507,14 +507,26 @@ try {
                 </div>
 
                 <div class="form-group">
+    <label class="form-label required">Jabatan Pejabat</label>
+    <select id="jabatan_pejabat" name="jabatan_pejabat" class="form-select" required>
+        <option value="">Pilih Jabatan</option>
+        <?php foreach (getPejabatJabatanList() as $jabatan): ?>
+            <option value="<?= htmlspecialchars($jabatan) ?>">
+                <?= htmlspecialchars($jabatan) ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
+</div>
+
+                <div class="form-group">
                     <label class="form-label required">Nama Pejabat</label>
                     <select id="nama_pejabat" name="nama_pejabat" class="form-select" required>
-                        <option value="">Pilih Pejabat</option>
+                        <option value="">Pilih Nama Pejabat</option>
                         <?php foreach ($pejabatList as $pejabat): ?>
                             <option value="<?= htmlspecialchars($pejabat['nip']) ?>">
                                 <?= htmlspecialchars($pejabat['nama']) ?>
                             </option>
-                        <?php endforeach; ?>
+                        <?php endforeach; ?> 
                     </select>
                 </div>
 
@@ -525,9 +537,9 @@ try {
 
                 <div class="form-buttons">
                     <?php if ($databaseStatus === 'connected'): ?>
-                    <button type="submit" class="btn btn-success" name="action" value="export_word">📄 Download DOCX</button>
+                    <button type="submit" class="btn btn-success" name="action" value="export_word"> Download DOCX</button>
                     <?php else: ?>
-                    <button type="button" class="btn btn-secondary" onclick="alert('Database tidak terhubung. Mohon perbaiki koneksi database untuk download DOCX.')">⚠️ Database Required</button>
+                    <button type="button" class="btn btn-secondary" onclick="alert('Database tidak terhubung. Mohon perbaiki koneksi database untuk download DOCX.')"> Database Required</button>
                     <?php endif; ?>
                     <button type="reset" class="btn btn-secondary">🔄 Reset</button>
                 </div>
@@ -598,31 +610,57 @@ try {
 
             // Function untuk generate preview
             function generatePreview() {
-                const nomor_surat = $('#nomor_surat').val() || '001/ST/<?= date('Y') ?>';
                 const acara = $('#acara').val() || '[Acara belum diisi]';
                 const tglMulai = $('#tgl_mulai').val();
                 const tglSelesai = $('#tgl_selesai').val();
                 const lokasi = $('#lokasi').val() || '[Lokasi belum diisi]';
                 const dipa = $('#dipa').val() || 'SP DIPA-139.05.1.693321/2025 tanggal 2 Desember 2024';
+                const jabatanPejabat = $('#jabatan_pejabat option:selected').text() || '[Jabatan belum dipilih]';
                 const namaPejabat = $('#nama_pejabat option:selected').text() || '[Pejabat belum dipilih]';
                 const nipPejabat = $('#nama_pejabat').val() || '';
                 const tembusan = $('#tembusan').val();
                 
                 // Format tanggal
-                let tanggalFormatted = '[Tanggal belum diisi]';
-                if (tglMulai) {
-                    const startDate = new Date(tglMulai);
-                    const bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-                                  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-                    const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-                    
-                    if (tglSelesai && tglSelesai !== tglMulai) {
-                        const endDate = new Date(tglSelesai);
-                        tanggalFormatted = `${hari[startDate.getDay()]}-${hari[endDate.getDay()]}, ${startDate.getDate()}-${endDate.getDate()} ${bulan[startDate.getMonth()]} ${startDate.getFullYear()}`;
-                    } else {
-                        tanggalFormatted = `${hari[startDate.getDay()]}, ${startDate.getDate()} ${bulan[startDate.getMonth()]} ${startDate.getFullYear()}`;
-                    }
-                }
+               // Format tanggal (sesuai PHP formatTanggalRange)
+let tanggalFormatted = '[Tanggal belum diisi]';
+if (tglMulai) {
+    const startDate = new Date(tglMulai);
+    const endDate = tglSelesai ? new Date(tglSelesai) : startDate;
+
+    // Validasi tanggal akhir tidak boleh sebelum tanggal mulai
+    if (endDate < startDate) {
+        tanggalFormatted = 'Error: Tanggal akhir tidak boleh sebelum tanggal awal';
+    } else {
+        const bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+
+        const hari1 = hari[startDate.getDay()];
+        const hari2 = hari[endDate.getDay()];
+
+        const tgl1 = startDate.getDate();
+        const tgl2 = endDate.getDate();
+
+        const bln1 = bulan[startDate.getMonth()];
+        const bln2 = bulan[endDate.getMonth()];
+
+        const thn1 = startDate.getFullYear();
+        const thn2 = endDate.getFullYear();
+
+        if (bln1 === bln2 && thn1 === thn2) {
+            // Sama bulan & tahun
+            if (tgl1 === tgl2) {
+                tanggalFormatted = `${hari1}, tanggal ${tgl1} ${bln1} ${thn1}`;
+            } else {
+                tanggalFormatted = `${hari1}-${hari2}, tanggal ${tgl1}-${tgl2} ${bln1} ${thn1}`;
+            }
+        } else {
+            // Beda bulan atau tahun
+            tanggalFormatted = `${hari1}, tanggal ${tgl1} ${bln1} ${thn1} - ${hari2}, ${tgl2} ${bln2} ${thn2}`;
+        }
+    }
+}
+
                 
                 // Get selected pegawai
                 const selectedPegawai = $('#pegawai').val() || [];
@@ -641,7 +679,6 @@ try {
                                     <td style="text-align: center; border: 1px solid #000; padding: 6px;">${index + 1}.</td>
                                     <td style="border: 1px solid #000; padding: 6px;">
                                         <strong>${parts[1] || 'Nama Eksternal'}</strong><br>
-                                        <em>Pegawai Eksternal</em>
                                     </td>
                                     <td style="border: 1px solid #000; padding: 6px;">${parts[2] || 'Jabatan Eksternal'}</td>
                                 </tr>
@@ -680,7 +717,7 @@ try {
                                 <tr>
                                     <td style="width: 70px; border: none; text-align: center; vertical-align: middle;">
                                         <div style="width: 60px; height: 60px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; font-size: 7pt; color: #666;">
-                                            LOGO<br>KEMENDIKTI
+                                           <img src="assets/dikti.png" alt="LOGO KEMENDIKTI" style="max-width: 100%; max-height: 100%;">
                                         </div>
                                     </td>
                                     <td style="border: none; text-align: center; vertical-align: middle;">
@@ -724,15 +761,17 @@ try {
                         <div style="margin: 15px 0; text-align: justify; line-height: 1.5;">
                             <p>Untuk hadir dan melaksanakan tugas dalam kegiatan dimaksud yang akan diselenggarakan pada hari ${tanggalFormatted}, bertempat di ${lokasi}</p>
                             
+                            <br/>
                             <p>Biaya kegiatan dibebankan kepada DIPA Satuan Kerja Direktorat Jenderal Sains dan Teknologi, Nomor: ${dipa}.</p>
                             
+                            <br/>
                             <p>Surat tugas ini dibuat untuk dilaksanakan dengan penuh tanggung jawab dan yang bersangkutan diharapkan membuat laporan.</p>
                         </div>
                         
                         <div style="margin-top: 30px; display: table; width: 100%;">
                             <div style="display: table-cell; width: 50%; vertical-align: top;"></div>
                             <div style="display: table-cell; width: 50%; text-align: center; vertical-align: top;">
-                                <div style="margin-bottom: 12px;">Sekretaris,</div>
+                                <div style="margin-bottom: 12px;"> ${jabatanPejabat} ,</div>
                                 <div style="margin: 60px 0 12px 0;"></div>
                                 <div style="font-weight: bold;">${namaPejabat}</div>
                                 <div style="font-size: 9pt;">NIP ${nipPejabat}</div>
