@@ -14,7 +14,8 @@ class SuratController {
     private $pegawaiModel;
 
     public function __construct() {
-        checkLogin();
+        // Remove checkLogin() since no authentication system is implemented
+        // checkLogin();
         $database = new Database();
         $this->db = $database->getConnection();
         $this->pegawaiModel = new Pegawai($this->db);

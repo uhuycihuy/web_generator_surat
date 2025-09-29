@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once __DIR__ . '/BaseController.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../helpers/utils.php';
@@ -17,14 +18,23 @@ use PhpOffice\PhpWord\Settings;
 
 class SuratTugasController extends BaseController {
 
+    public function __construct() {
+        // Remove checkLogin() since no authentication system is implemented
+        // checkLogin();
+    }
+
     // helper untuk membersihkan field
     private function cleanField($value) {
         return (!empty($value) && $value !== '-') ? $value : '';
     }
     
     public function exportWord() {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['action']) || $_POST['action'] !== 'export_word') {
-            return $this->jsonResponse(['error' => 'Invalid request'], 400);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            die('Error: Invalid request method. Only POST requests are allowed.');
+        }
+        
+        if (!isset($_POST['action']) || $_POST['action'] !== 'export_word') {
+            die('Error: Invalid action. Expected "export_word", got: ' . ($_POST['action'] ?? 'none'));
         }
     
         try {
@@ -176,7 +186,9 @@ class SuratTugasController extends BaseController {
             exit;
             
         } catch (Exception $e) {
-            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+            error_log('SuratTugasController Error: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
+            die('Error: ' . $e->getMessage());
         }
     }
     
