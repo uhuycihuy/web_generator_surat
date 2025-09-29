@@ -49,4 +49,15 @@ class AdminController {
     public function deletePegawai($nip) {
         return $this->pegawaiModel->deletePegawai($nip);
     }
+
+      public function updateUser($no_id, $username, $password = null) {
+        $currentUser = currentUser();
+
+        if ($currentUser['role'] !== 'admin' && $currentUser['id'] != $no_id) {
+            echo "Akses ditolak!";
+            exit;
+        }
+
+        return $this->userModel->updateUser($no_id, $username, $password);
+    }
 }

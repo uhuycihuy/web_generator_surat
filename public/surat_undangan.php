@@ -435,6 +435,33 @@ try {
             opacity: 1;
         }
 
+        .success-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1001;
+            transform: translateX(400px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .success-message.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .success-message.info {
+            background: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
         @media (max-width: 768px) {
             .container {
                 grid-template-columns: 1fr;
@@ -475,6 +502,46 @@ try {
             border-radius: 8px;
             margin-top: 10px;
             border: 1px solid #e5e7eb;
+        }
+
+        .select2-selection__choice {
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: #10b981 !important;
+            border-color: #059669 !important;
+            color: white !important;
+        }
+
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+            color: white !important;
+        }
+
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+            background-color: rgba(255,255,255,0.2) !important;
+            color: white !important;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .btn.btn-success {
+            animation: pulse 0.6s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
@@ -606,9 +673,14 @@ try {
                     </div>
                     
                     <div class="pegawai-luar-form" id="pegawai_luar_form">
-                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                            <input type="text" class="form-input" id="nama_luar" placeholder="Nama Lengkap" style="flex: 1;">
-                            <input type="text" class="form-input" id="jabatan_luar" placeholder="Jabatan/Instansi" style="flex: 1;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <input type="text" class="form-input" id="nama_luar" placeholder="Nama Lengkap">
+                            <input type="text" class="form-input" id="nip_luar" placeholder="NIP (opsional)">
+                            <input type="text" class="form-input" id="pangkat_luar" placeholder="Pangkat (opsional)">
+                            <input type="text" class="form-input" id="golongan_luar" placeholder="Golongan (opsional)">
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <input type="text" class="form-input" id="jabatan_luar" placeholder="Jabatan/Instansi">
                         </div>
                         <button type="button" class="btn btn-primary" id="tambah_luar" style="font-size: 12px; padding: 6px 12px;">
                             ➕ Tambah
@@ -672,6 +744,9 @@ try {
         ✓ Preview diperbarui
     </div>
 
+    <!-- Success message -->
+    <div class="success-message" id="successMessage"></div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
@@ -682,6 +757,15 @@ try {
                 placeholder: 'Pilih peserta undangan...',
                 allowClear: true,
                 width: '100%'
+            }).on('select2:select', function(e) {
+                // Show success message when selecting from database
+                const selectedText = e.params.data.text;
+                if (!selectedText.includes('(Eksternal)')) {
+                    showSuccessMessage('✓ Peserta berhasil dipilih');
+                }
+            }).on('select2:unselect', function(e) {
+                // Show info when removing selection
+                showSuccessMessage('ℹ Peserta dihapus dari daftar');
             });
 
             // Jenis undangan selector
@@ -720,18 +804,31 @@ try {
             // Add external participant
             $('#tambah_luar').click(function() {
                 const nama = $('#nama_luar').val().trim();
+                const nip = $('#nip_luar').val().trim();
+                const pangkat = $('#pangkat_luar').val().trim();
+                const golongan = $('#golongan_luar').val().trim();
                 const jabatan = $('#jabatan_luar').val().trim();
                 
                 if (nama && jabatan) {
-                    const value = `L|${nama}|${jabatan}`;
+                    const value = `L|${nama}|${nip || '-'}|${pangkat || '-'}|${golongan || '-'}|${jabatan}`;
                     const text = `${nama} - ${jabatan} (Eksternal)`;
                     
                     // Add to select2
                     const newOption = new Option(text, value, true, true);
                     $('#pegawai').append(newOption).trigger('change');
                     
+                    // Show success feedback
+                    showSuccessMessage('✓ Peserta eksternal berhasil ditambahkan');
+                    
+                    // Button animation
+                    const btn = $(this);
+                    btn.html('✓ Ditambahkan').addClass('btn-success').removeClass('btn-primary');
+                    setTimeout(() => {
+                        btn.html('➕ Tambah').removeClass('btn-success').addClass('btn-primary');
+                    }, 2000);
+                    
                     // Clear inputs
-                    $('#nama_luar, #jabatan_luar').val('');
+                    $('#nama_luar, #nip_luar, #pangkat_luar, #golongan_luar, #jabatan_luar').val('');
                 } else {
                     alert('Mohon isi nama dan jabatan peserta eksternal');
                 }
@@ -784,28 +881,49 @@ try {
                 let undanganRows = '';
                 
                 if (selectedPegawai.length > 0) {
-                    selectedPegawai.forEach((nip, index) => {
+                    let currentNo = 1;
+                    selectedPegawai.forEach((nip) => {
                         if (nip.startsWith('L|')) {
                             // Peserta eksternal
                             const parts = nip.split('|');
-                            const namaJabatan = `${parts[1] || 'Nama Eksternal'}, ${parts[2] || 'Jabatan Eksternal'}`;
+                            let namaJabatan = `${parts[1] || 'Nama Eksternal'}`;
+                            
+                            // Tambahkan NIP jika ada dan tidak kosong
+                            if (parts[2] && parts[2].trim() !== '' && parts[2] !== '-') {
+                                namaJabatan += `<br>NIP ${parts[2]}`;
+                            }
+                            
+                            // Tambahkan pangkat dan golongan jika ada dan tidak kosong
+                            const pangkat = parts[3] && parts[3].trim() !== '' && parts[3] !== '-' ? parts[3] : '';
+                            const golongan = parts[4] && parts[4].trim() !== '' && parts[4] !== '-' ? parts[4] : '';
+                            
+                            if (pangkat || golongan) {
+                                const pangkatGolongan = [pangkat, golongan].filter(item => item).join(', ');
+                                if (pangkatGolongan) {
+                                    namaJabatan += `<br>${pangkatGolongan}`;
+                                }
+                            }
+                            
+                            namaJabatan += `<br>${parts[5] || 'Jabatan Eksternal'}`;
+                            
                             undanganRows += `
                                 <tr>
-                                    <td style="text-align: center; border: 1px solid #000; padding: 8px; width: 30px;">${index + 1}.</td>
+                                    <td style="text-align: center; border: 1px solid #000; padding: 8px; width: 30px;">${currentNo}.</td>
                                     <td style="border: 1px solid #000; padding: 8px;">${namaJabatan}</td>
                                 </tr>
                             `;
                         } else {
                             // Peserta internal
                             const pegawaiData = findPegawaiByNip(nip);
-                            const namaJabatan = `${pegawaiData.nama_pegawai}, ${pegawaiData.jabatan}`;
+                            const namaJabatan = `${pegawaiData.nama_pegawai}<br>NIP ${pegawaiData.nip}<br>${pegawaiData.pangkat}, ${pegawaiData.golongan}<br>${pegawaiData.jabatan}`;
                             undanganRows += `
                                 <tr>
-                                    <td style="text-align: center; border: 1px solid #000; padding: 8px; width: 30px;">${index + 1}.</td>
+                                    <td style="text-align: center; border: 1px solid #000; padding: 8px; width: 30px;">${currentNo}.</td>
                                     <td style="border: 1px solid #000; padding: 8px;">${namaJabatan}</td>
                                 </tr>
                             `;
                         }
+                        currentNo++;
                     });
                 } else {
                     undanganRows = `
@@ -991,6 +1109,28 @@ try {
                 setTimeout(() => {
                     indicator.classList.remove('show');
                 }, 1500);
+            }
+
+            // Show success message function
+            function showSuccessMessage(message) {
+                const successMsg = document.getElementById('successMessage');
+                successMsg.textContent = message;
+                
+                // Remove existing classes
+                successMsg.classList.remove('info');
+                
+                // Add info class for info messages
+                if (message.includes('ℹ')) {
+                    successMsg.classList.add('info');
+                }
+                
+                successMsg.classList.add('show');
+                setTimeout(() => {
+                    successMsg.classList.remove('show');
+                    setTimeout(() => {
+                        successMsg.classList.remove('info');
+                    }, 400);
+                }, 3000);
             }
 
             // Auto preview on form change (debounced)

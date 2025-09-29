@@ -16,6 +16,12 @@ use PhpOffice\PhpWord\Settings;
 
 
 class SuratTugasController extends BaseController {
+
+    // helper untuk membersihkan field
+    private function cleanField($value) {
+        return (!empty($value) && $value !== '-') ? $value : '';
+    }
+    
     public function exportWord() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['action']) || $_POST['action'] !== 'export_word') {
             return $this->jsonResponse(['error' => 'Invalid request'], 400);
@@ -52,11 +58,11 @@ class SuratTugasController extends BaseController {
                     // Pegawai eksternal
                     $parts = explode('|', $nipPegawai);
                     $daftarPegawai[] = [
-                        'nama_pegawai' => $parts[1] ?? 'Nama Eksternal',
-                        'nip' => '-',
-                        'pangkat' => '-',
-                        'golongan' => '-',
-                        'jabatan' => $parts[2] ?? 'Jabatan Eksternal',
+                        'nama_pegawai' => $this->cleanField($parts[1] ?? 'Nama Eksternal'),
+                        'nip' => $this->cleanField($parts[2] ?? ''),
+                        'pangkat' => $this->cleanField($parts[3] ?? ''),
+                        'golongan' => $this->cleanField($parts[4] ?? ''),
+                        'jabatan' => $this->cleanField($parts[5] ?? 'Jabatan Eksternal'),
                         'is_external' => true
                     ];
                 } else {
@@ -114,13 +120,24 @@ class SuratTugasController extends BaseController {
                     $no = $index + 1;
                     $templateProcessor->setValue('no#' . $no, $no . '.');
                     
-                    if ($pegawai['is_external']) {
-                        $nama_nip = $pegawai['nama_pegawai'];
-                    } else {
-                        $nama_nip = $pegawai['nama_pegawai'] . "\nNIP " . $pegawai['nip'] . "\n" . 
-                                   $pegawai['pangkat'] . ", " . $pegawai['golongan'];
+                    $nipText = !empty($pegawai['nip']) ? $pegawai['nip'] : '';
+                    $pangkatGolongan = '';
+                    if (!empty($pegawai['pangkat']) && !empty($pegawai['golongan'])) {
+                        $pangkatGolongan = $pegawai['pangkat'] . ', ' . $pegawai['golongan'];
+                    } elseif (!empty($pegawai['pangkat'])) {
+                        $pangkatGolongan = $pegawai['pangkat'];
+                    } elseif (!empty($pegawai['golongan'])) {
+                        $pangkatGolongan = $pegawai['golongan'];
                     }
-                    
+
+                    $nama_nip = $pegawai['nama_pegawai'];
+                    if ($nipText) {
+                        $nama_nip .= "\n" . $nipText;
+                    }
+                    if ($pangkatGolongan) {
+                        $nama_nip .= "\n" . $pangkatGolongan;
+                    }
+
                     $templateProcessor->setValue('nama_nip#' . $no, $nama_nip);
                     $templateProcessor->setValue('jabatan#' . $no, $pegawai['jabatan']);
                 }
