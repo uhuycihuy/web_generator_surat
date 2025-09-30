@@ -32,8 +32,8 @@ $pegawaiList = $userController->getAllPegawai();
             <div class="title-group">
                 <i class="fa-solid fa-users icon-title"></i>
                 <div>
-                    <h1 class="page-title">Daftar Pegawai Saintek</h1>
-                    <p class="page-subtitle">Lengkapi data untuk membuat surat</p>
+                    <h1 class="page-title">Daftar Pegawai Kemendikti Saintek</h1>
+                    <p class="page-subtitle">Halaman mencari pegawai Kemendikti Saintek</p>
                 </div>
             </div>
         </div>
