@@ -18,7 +18,7 @@ class SuratUndanganController extends BaseController {
     
     public function __construct() {
         // Remove checkLogin() since no authentication system is implemented
-        // checkLogin();
+        checkLogin();
     }
     public function exportWord() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

@@ -5,6 +5,13 @@ require_once '../backend/models/Pegawai.php';
 require_once '../backend/helpers/utils.php';
 require_once '../backend/helpers/PegawaiHelper.php';
 
+session_start();
+// Cek apakah user sudah login
+if (!isset($_SESSION['user'])) {
+    header("Location: login.php");
+    exit;
+}
+
 // Initialize database dan models
 try {
     $database = new Database();
@@ -72,15 +79,7 @@ try {
     <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body class="generator-surat">
-    <header class="header generator-surat">
-        <div class="header-left">
-            <div class="logo"></div>
-            <div class="header-title">Kementerian Pendidikan Tinggi, Sains, dan Teknologi</div>
-        </div>
-        <div class="header-buttons">
-            <a href="../index.php" class="header-btn">🏠 Dashboard</a>
-        </div>
-    </header>
+    <?php include "navbar.php"; ?>
 
     <div class="container">
         <div class="form-section">

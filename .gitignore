@@ -4,16 +4,22 @@
 test_*.doc
 test_*.docx
 surat_*_test.*
+/backend/temp/*.doc
+/backend/temp/*.docx
 
 # System files
 .DS_Store
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.~*
 
 # IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
+*.iml
 
 # Logs
 *.log
@@ -28,5 +34,20 @@ access.log
 cache/
 *.cache
 
-# Dependencies (already in repo, so ignore changes)
-vendor/composer/installed.json
+# Composer dependencies
+/backend/vendor/
+
+# Environment files
+.env
+*.env
+
+# PHPUnit / testing
+phpunit.xml
+phpunit.xml.dist
+
+# Optional: frontend package folder
+/node_modules/
+
+# Optional: local database files
+*.db
+*.sqlite

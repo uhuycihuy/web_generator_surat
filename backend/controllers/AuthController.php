@@ -23,17 +23,20 @@ class AuthController {
                 'username' => $user['username'],
                 'role'     => $user['role']
             ];
-            header("Location: dashboard.php");
+            header("Location: generator_surat.php");
             exit;
         } else {
-            echo "Login gagal! Username atau password salah.";
+            $_SESSION['error'] = "Login gagal! Username atau password salah.";
+            header("Location: login.php");
+            exit;
         }
     }
 
     // Proses logout
     public function logout() {
+        session_unset();
         session_destroy();
-        header("Location: login.php");
+        header("Location: ../public/login.php?status=logout");
         exit;
     }
 
@@ -57,7 +60,7 @@ class AuthController {
 }
 
 // Auto-handle request
-if (!empty($_POST) || !empty($_GET)) {
+if (isset($_GET['action']) || isset($_POST['action'])) {
     $controller = new AuthController();
     $controller->handleRequest();
 }

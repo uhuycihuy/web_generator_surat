@@ -20,7 +20,7 @@ class SuratTugasController extends BaseController {
 
     public function __construct() {
         // Remove checkLogin() since no authentication system is implemented
-        // checkLogin();
+        checkLogin();
     }
 
     // helper untuk membersihkan field
