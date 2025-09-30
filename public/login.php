@@ -7,6 +7,12 @@ require_once '../backend/controllers/AuthController.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+if (isset($_SESSION['user'])) {
+    header("Location: generator_surat.php");
+    exit;
+}
+
 $error = $_SESSION['error'] ?? '';
 unset($_SESSION['error']);
 ?>
