@@ -79,7 +79,19 @@ try {
     <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body class="generator-surat">
-    <?php include "navbar.php"; ?>
+   <?php
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        $role = $_SESSION['user']['role'] ?? 'guest';
+
+        if ($role === 'admin') {
+            include "sidebar.php";
+        } else {
+            include "navbar.php";
+        }
+    ?>
 
     <div class="container">
         <div class="form-section">

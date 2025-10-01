@@ -25,7 +25,19 @@ $pegawaiList = $userController->getAllPegawai();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body class="daftar-pegawai">
-    <?php include 'navbar.php'; ?>
+    <?php
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        $role = $_SESSION['user']['role'] ?? 'guest';
+
+        if ($role === 'admin') {
+            include "sidebar.php";
+        } else {
+            include "navbar.php";
+        }
+    ?>
 
     <div class="container-pegawai">
         <div class="header-section">
