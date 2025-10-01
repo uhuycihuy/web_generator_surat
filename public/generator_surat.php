@@ -137,7 +137,7 @@ try {
 
                     <div class="form-group">
                         <label class="form-label required">Tempat Kegiatan</label>
-                        <textarea id="lokasi_tugas" name="lokasi" class="form-textarea" placeholder="Contoh: Ruang Rapat Rektorat Lantai 9, Kampus Baru Depok" required></textarea>
+                        <textarea id="lokasi_tugas" name="lokasi_tugas" class="form-textarea" placeholder="Contoh: Ruang Rapat Rektorat Lantai 9, Kampus Baru Depok" required></textarea>
                     </div>
 
                     <div class="form-group">
@@ -358,15 +358,102 @@ try {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         // Global function untuk mencari data pegawai berdasarkan NIP
-        window.findPegawaiByNip = function(nip) {
-            const pegawaiData = <?= json_encode($daftarPegawai) ?>;
-            return pegawaiData.find(p => p.nip === nip) || {
-                nama_pegawai: 'Data tidak ditemukan',
-                nip: nip,
-                pangkat: '-',
-                golongan: '-',
-                jabatan: '-'
-            };
+        window._pegawaiData = <?= json_encode($daftarPegawai) ?> || [];
+        console.debug('[debug] pegawaiData count:', window._pegawaiData.length);
+        console.debug('[debug] sample nips:', window._pegawaiData.slice(0,10).map(p=>p.nip));
+
+        // Build fast lookup maps: exact NIP, digits-only NIP, and normalized name
+        window._pegawaiIndexExact = {};
+        window._pegawaiIndexDigits = {};
+        window._pegawaiIndexName = {};
+        (window._pegawaiData || []).forEach(function(p) {
+            const nipRaw = String(p.nip || '').trim();
+            const nipDigits = nipRaw.replace(/\D/g, '');
+            const nameNorm = String(p.nama_pegawai || p.nama || '').replace(/\s+/g, ' ').trim().toLowerCase();
+            if (nipRaw) window._pegawaiIndexExact[nipRaw] = p;
+            if (nipDigits) window._pegawaiIndexDigits[nipDigits] = p;
+            if (nameNorm && !window._pegawaiIndexName[nameNorm]) window._pegawaiIndexName[nameNorm] = p;
+        });
+
+        window.findPegawaiByNip = function(nipOrName) {
+            const pegawaiData = window._pegawaiData;
+
+            if (!nipOrName && nipOrName !== 0) {
+                return { nama_pegawai: 'Data tidak ditemukan', nip: '', pangkat: '', golongan: '', jabatan: '' };
+            }
+
+            // Jika pegawai eksternal berformat L|Nama|nip|pangkat|golongan|jabatan
+            if (typeof nipOrName === 'string' && nipOrName.startsWith('L|')) {
+                const parts = nipOrName.split('|');
+                return {
+                    nama_pegawai: parts[1] || 'Nama Eksternal',
+                    nip: parts[2] || '',
+                    pangkat: (parts[3] && parts[3] !== '-') ? parts[3] : '',
+                    golongan: (parts[4] && parts[4] !== '-') ? parts[4] : '',
+                    jabatan: parts[5] || ''
+                };
+            }
+
+            const key = String(nipOrName).trim();
+
+            // exact NIP match (fast index)
+            let found = (window._pegawaiIndexExact && window._pegawaiIndexExact[key]) || null;
+            if (found) {
+                return {
+                    nama_pegawai: found.nama_pegawai || '',
+                    nip: found.nip || key,
+                    pangkat: found.pangkat ?? '',
+                    golongan: found.golongan ?? '',
+                    jabatan: found.jabatan ?? ''
+                };
+            }
+
+            // digit-only compare
+            const digitsKey = key.replace(/\D/g, '');
+            if (digitsKey) {
+                const foundDigits = (window._pegawaiIndexDigits && window._pegawaiIndexDigits[digitsKey]) || null;
+                if (foundDigits) {
+                    return {
+                        nama_pegawai: foundDigits.nama_pegawai || '',
+                        nip: foundDigits.nip || key,
+                        pangkat: foundDigits.pangkat ?? '',
+                        golongan: foundDigits.golongan ?? '',
+                        jabatan: foundDigits.jabatan ?? ''
+                    };
+                }
+            }
+
+            // name-based fallback (normalize spaces and case)
+            const normalizeName = s => String(s || '').replace(/\s+/g,' ').trim().toLowerCase();
+            const lookupName = normalizeName(key);
+            if (lookupName) {
+                // exact name (fast index)
+                found = (window._pegawaiIndexName && window._pegawaiIndexName[lookupName]) || null;
+                if (found) {
+                    return {
+                        nama_pegawai: found.nama_pegawai || '',
+                        nip: found.nip || '',
+                        pangkat: found.pangkat ?? '',
+                        golongan: found.golongan ?? '',
+                        jabatan: found.jabatan ?? ''
+                    };
+                }
+                // contains
+                found = (window._pegawaiData || []).find(p => normalizeName(p.nama_pegawai || p.nama || '').indexOf(lookupName) !== -1);
+                if (found) {
+                    return {
+                        nama_pegawai: found.nama_pegawai || '',
+                        nip: found.nip || '',
+                        pangkat: found.pangkat ?? '',
+                        golongan: found.golongan ?? '',
+                        jabatan: found.jabatan ?? ''
+                    };
+                }
+            }
+
+            console.debug('[debug] findPegawaiByNip - NOT FOUND for', key, 'available nips count=', pegawaiData.length);
+            console.debug('[debug] available data sample:', pegawaiData.slice(0,3));
+            return { nama_pegawai: 'Data tidak ditemukan', nip: key, pangkat: '', golongan: '', jabatan: '' };
         };
     </script>
     <script src="assets/generator_surat.js"></script>

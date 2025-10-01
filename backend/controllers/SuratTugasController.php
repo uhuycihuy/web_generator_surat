@@ -47,7 +47,7 @@ class SuratTugasController extends BaseController {
             $tglMulai = $_POST['tgl_mulai'] ?? '';
             $tglSelesai = $_POST['tgl_selesai'] ?? '';
             $acara = $_POST['acara'] ?? '';
-            $lokasi = $_POST['lokasi'] ?? '';
+            $lokasi = $_POST['lokasi_tugas'] ?? $_POST['lokasi'] ?? '';
             $dipa = $_POST['dipa'] ?? 'SP DIPA-139.05.1.693321/2025 tanggal 2 Desember 2024';
             $tembusan = $_POST['tembusan'] ?? '';
             $nip_pejabat = $_POST['nama_pejabat'] ?? '';
@@ -61,7 +61,7 @@ class SuratTugasController extends BaseController {
             $namaPejabat = $pejabatList[$nip_pejabat] ?? '';
             $nipPejabat = $nip_pejabat;
             
-            // Get pegawai data
+            // Get pegawai data in the same order as frontend selection
             $daftarPegawai = [];
             foreach ($selectedPegawai as $nipPegawai) {
                 if (strpos($nipPegawai, 'L|') === 0) {

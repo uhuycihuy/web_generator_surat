@@ -20,12 +20,18 @@ $(document).ready(function() {
             $('#selected-employees').hide();
         }
         
-        $('#pegawai').val(selectedEmployees.map(emp => emp.nip)).trigger('change');
+        // Update hidden select to maintain order
+        const pegawaiSelect = $('#pegawai');
+        pegawaiSelect.empty();
+        selectedEmployees.forEach(emp => {
+            pegawaiSelect.append(new Option('', emp.nip, true, true));
+        });
+        pegawaiSelect.trigger('change');
     }
     
     // Employee checkbox change (including dynamically added external employees)
     $(document).on('change', '.employee-checkbox', function() {
-        const nip = $(this).closest('.employee-item').data('nip');
+        const nip = $(this).closest('.employee-item').attr('data-nip');
         const name = $(this).siblings('.employee-name').text().trim();
         
         if ($(this).is(':checked')) {
@@ -132,7 +138,7 @@ $(document).ready(function() {
 
     // Remove selected employee
     $(document).on('click', '.selected-employee-remove', function() {
-        const nip = $(this).data('nip');
+        const nip = $(this).attr('data-nip');
         const emp = selectedEmployees.find(e => e.nip === nip);
         
         selectedEmployees = selectedEmployees.filter(e => e.nip !== nip);
@@ -274,12 +280,11 @@ $(document).ready(function() {
             }
         }
         
-        // Get selected pegawai
-        const selectedPegawai = $('#pegawai').val() || [];
         let pegawaiRows = '';
-        
-        if (selectedPegawai.length > 0) {
-            selectedPegawai.forEach((nip, index) => {
+
+        if (selectedEmployees.length > 0) {
+            selectedEmployees.forEach((sel, index) => {
+                const nip = sel.nip;
                 if (nip.startsWith('L|')) {
                     const parts = nip.split('|');
                     let detailPegawai = `<strong>${parts[1] || 'Nama Eksternal'}</strong>`;
@@ -306,16 +311,25 @@ $(document).ready(function() {
                         </tr>
                     `;
                 } else {
+                    // internal employee: lookup by nip
                     const pegawaiData = window.findPegawaiByNip(nip);
+                    console.debug('[debug] Tugas preview - pegawaiData for', nip, ':', pegawaiData);
+                    
+                    // Build pangkat/golongan display only when present
+                    const pangkat = pegawaiData.pangkat ? String(pegawaiData.pangkat).trim() : '';
+                    const golongan = pegawaiData.golongan ? String(pegawaiData.golongan).trim() : '';
+                    const pangkatGolongan = [pangkat, golongan].filter(Boolean).join(', ');
+
+                    let detail = `<strong>${pegawaiData.nama_pegawai}</strong><br>${pegawaiData.nip}`;
+                    if (pangkatGolongan) {
+                        detail += `<br>${pangkatGolongan}`;
+                    }
+
                     pegawaiRows += `
                         <tr>
                             <td style="text-align: center; border: 1px solid #000; padding: 6px;">${index + 1}.</td>
-                            <td style="border: 1px solid #000; padding: 6px;">
-                                <strong>${pegawaiData.nama_pegawai}</strong><br>
-                                ${pegawaiData.nip}<br>
-                                ${pegawaiData.pangkat}, ${pegawaiData.golongan}
-                            </td>
-                            <td style="border: 1px solid #000; padding: 6px;">${pegawaiData.jabatan}</td>
+                            <td style="border: 1px solid #000; padding: 6px;">${detail}</td>
+                            <td style="border: 1px solid #000; padding: 6px;">${pegawaiData.jabatan || ''}</td>
                         </tr>
                     `;
                 }
@@ -453,17 +467,16 @@ $(document).ready(function() {
             }
         }
 
-        // Get selected pegawai
-        const selectedPegawai = $('#pegawai').val() || [];
         let undanganRows = '';
-        
-        if (selectedPegawai.length > 0) {
+
+        if (selectedEmployees.length > 0) {
             let currentNo = 1;
-            selectedPegawai.forEach((nip) => {
+            selectedEmployees.forEach((sel) => {
+                const nip = sel.nip;
                 if (nip.startsWith('L|')) {
                     const parts = nip.split('|');
                     const namaJabatan = `${parts[1] || 'Nama Eksternal'}<br>${parts[2] || 'Jabatan Eksternal'}`;
-                    
+
                     undanganRows += `
                         <tr>
                             <td style="text-align: center; border: 1px solid #000; padding: 8px; width: 30px;">${currentNo}.</td>
@@ -472,7 +485,20 @@ $(document).ready(function() {
                     `;
                 } else {
                     const pegawaiData = window.findPegawaiByNip(nip);
-                    const namaJabatan = `${pegawaiData.nama_pegawai}<br>NIP ${pegawaiData.nip}<br>${pegawaiData.pangkat}, ${pegawaiData.golongan}<br>${pegawaiData.jabatan}`;
+                    console.debug('[debug] Undangan preview - pegawaiData for', nip, ':', pegawaiData);
+                    
+                    const pangkat = pegawaiData.pangkat ? String(pegawaiData.pangkat).trim() : '';
+                    const golongan = pegawaiData.golongan ? String(pegawaiData.golongan).trim() : '';
+                    const pangkatGolongan = [pangkat, golongan].filter(Boolean).join(', ');
+                    
+                    let namaJabatan = `${pegawaiData.nama_pegawai}<br>NIP ${pegawaiData.nip}`;
+                    if (pangkatGolongan) {
+                        namaJabatan += `<br>${pangkatGolongan}`;
+                    }
+                    if (pegawaiData.jabatan) {
+                        namaJabatan += `<br>${pegawaiData.jabatan}`;
+                    }
+                    
                     undanganRows += `
                         <tr>
                             <td style="text-align: center; border: 1px solid #000; padding: 8px; width: 30px;">${currentNo}.</td>
@@ -693,6 +719,8 @@ $(document).ready(function() {
         
         // Debug: log form data
         console.log('Form action:', $(this).attr('action'));
+        console.log('Selected employees order:', selectedEmployees.map(e => e.nip));
+        console.log('Form pegawai field:', $('#pegawai').val());
         console.log('Form data:', $(this).serialize());
         
         const submitter = e.originalEvent.submitter;
