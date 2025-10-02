@@ -66,6 +66,12 @@ $(document).ready(function() {
         const jenis = $(this).data('jenis');
         $('#jenis_surat').val(jenis);
         
+        // Reset selected employees when switching letter type
+        selectedEmployees = [];
+        $('.employee-checkbox').prop('checked', false);
+        $('.employee-item-external').remove();
+        updateSelectedCount();
+        
         if (jenis === 'undangan') {
             $('.tugas-fields').hide();
             $('.undangan-fields').show();
@@ -73,7 +79,7 @@ $(document).ready(function() {
             $('.undangan-external-fields').show();
             $('#label-acara').text('Acara');
             $('#label-pegawai').text('Peserta Undangan');
-            $('#preview-title').text('Preview Surat Undangan');
+            $('#preview-title').text('Preview');
             $('#acara').attr('placeholder', 'Contoh: Rapat Koordinasi Penyusunan Program Kerja Tahun 2025');
             
             // Set required fields for undangan
@@ -371,9 +377,9 @@ $(document).ready(function() {
                     </table>
                 </div>
                 
-                <div style="text-align: center; font-weight: bold; font-size: 12pt; margin: 20px 0; text-decoration: underline;">
-                    <strong>SURAT TUGAS</strong><br>
-                    <span style="font-weight: normal; font-size: 10pt;">Nomor: </span>
+                <div style="text-align: center; font-size: 12pt; margin: 20px 0;">
+                    <div style="margin-bottom: 5px;">SURAT TUGAS</div>
+                    <div style="font-size: 11pt;">Nomor</div>
                 </div>
                 
                 <div style="margin: 15px 0; text-align: justify; line-height: 1.5;">
@@ -415,8 +421,13 @@ $(document).ready(function() {
                 
                 ${tembusan ? `
                 <div style="margin-top: 30px; clear: both;">
-                    <strong>Tembusan:</strong><br>
-                    ${tembusan.replace(/\n/g, '<br>')}
+                    <div style="display: table; width: 100%;">
+                        <div style="display: table-cell; width: 50%; vertical-align: top;">
+                            Tembusan:<br>
+                            ${tembusan.replace(/\n/g, '<br>')}
+                        </div>
+                        <div style="display: table-cell; width: 50%; vertical-align: top;"></div>
+                    </div>
                 </div>
                 ` : ''}
             </div>
@@ -467,55 +478,42 @@ $(document).ready(function() {
             }
         }
 
-        let undanganRows = '';
-
-        if (selectedEmployees.length > 0) {
-            let currentNo = 1;
-            selectedEmployees.forEach((sel) => {
-                const nip = sel.nip;
-                if (nip.startsWith('L|')) {
-                    const parts = nip.split('|');
-                    const namaJabatan = `${parts[1] || 'Nama Eksternal'}<br>${parts[2] || 'Jabatan Eksternal'}`;
-
-                    undanganRows += `
-                        <tr>
-                            <td style="text-align: center; border: 1px solid #000; padding: 8px; width: 30px;">${currentNo}.</td>
-                            <td style="border: 1px solid #000; padding: 8px;">${namaJabatan}</td>
-                        </tr>
-                    `;
-                } else {
-                    const pegawaiData = window.findPegawaiByNip(nip);
-                    console.debug('[debug] Undangan preview - pegawaiData for', nip, ':', pegawaiData);
-                    
-                    const pangkat = pegawaiData.pangkat ? String(pegawaiData.pangkat).trim() : '';
-                    const golongan = pegawaiData.golongan ? String(pegawaiData.golongan).trim() : '';
-                    const pangkatGolongan = [pangkat, golongan].filter(Boolean).join(', ');
-                    
-                    let namaJabatan = `${pegawaiData.nama_pegawai}<br>NIP ${pegawaiData.nip}`;
-                    if (pangkatGolongan) {
-                        namaJabatan += `<br>${pangkatGolongan}`;
+        function generateUndanganList() {
+            let undanganList = '';
+            
+            if (selectedEmployees.length > 0) {
+                selectedEmployees.forEach((sel, index) => {
+                    const nip = sel.nip;
+                    if (nip.startsWith('L|')) {
+                        const parts = nip.split('|');
+                        const nama = parts[1] || 'Nama Eksternal';
+                        const jabatan = parts[2] || 'Jabatan Eksternal';
+                        
+                        undanganList += `
+                            <div style="margin-bottom: 8px; line-height: 1.4;">
+                                ${index + 1}. ${nama}, ${jabatan}
+                            </div>
+                        `;
+                    } else {
+                        const pegawaiData = window.findPegawaiByNip(nip);
+                        const jabatan = pegawaiData.jabatan || '';
+                        
+                        undanganList += `
+                            <div style="margin-bottom: 8px; line-height: 1.4;">
+                                ${index + 1}. ${pegawaiData.nama_pegawai}, ${jabatan}
+                            </div>
+                        `;
                     }
-                    if (pegawaiData.jabatan) {
-                        namaJabatan += `<br>${pegawaiData.jabatan}`;
-                    }
-                    
-                    undanganRows += `
-                        <tr>
-                            <td style="text-align: center; border: 1px solid #000; padding: 8px; width: 30px;">${currentNo}.</td>
-                            <td style="border: 1px solid #000; padding: 8px;">${namaJabatan}</td>
-                        </tr>
-                    `;
-                }
-                currentNo++;
-            });
-        } else {
-            undanganRows = `
-                <tr>
-                    <td colspan="2" style="text-align: center; font-style: italic; color: #666; border: 1px solid #000; padding: 8px;">
+                });
+            } else {
+                undanganList = `
+                    <div style="text-align: center; font-style: italic; color: #666; padding: 20px;">
                         Belum ada peserta yang dipilih
-                    </td>
-                </tr>
-            `;
+                    </div>
+                `;
+            }
+            
+            return undanganList;
         }
 
         // Template preview
@@ -548,14 +546,14 @@ $(document).ready(function() {
 
                 <!-- Nomor, Lampiran, Hal -->
                 <div style="margin: 20px 0; font-size: 11pt;">
-                    <div><strong>Nomor</strong>: ___________________</div>
-                    <div><strong>Lampiran</strong>: satu lembar</div>
-                    <div><strong>Hal</strong>: Undangan</div>
+                    <div>Nomor :</div>
+                    <div>Lampiran : satu lembar</div>
+                    <div>Hal : Undangan</div>
                 </div>
 
                 <!-- Yth. -->
                 <div style="margin: 20px 0; font-size: 11pt;">
-                    <div style="font-weight: bold;">Yth. Peserta Kegiatan</div>
+                    <div>Yth. Peserta Kegiatan</div>
                     <div>(daftar terlampir)</div>
                 </div>
 
@@ -615,7 +613,7 @@ $(document).ready(function() {
                 <div style="margin: 15px 0; text-align: justify; line-height: 1.5;">
                     ${kalimatOpsional ? `<p>${kalimatOpsional}</p><br/>` : ''}
                     ${narahubung && noNarahubung ? `
-                    <p>Untuk informasi lebih lanjut mengenai rapat dan konfirmasi kehadiran, tim ${gender} dapat menghubungi ${narahubung} di nomor ${noNarahubung}.</p>
+                    <p>Untuk informasi lebih lanjut mengenai rapat dan konfirmasi kehadiran, tim Bapak/Ibu dapat menghubungi narahubung kami melalui ${gender} ${narahubung} di nomor gawai ${noNarahubung}.</p>
                     <br/>
                     ` : ''}
                     <p>Demikian surat ini kami sampaikan. Atas perhatian dan kerja sama yang baik, kami ucapkan terima kasih.</p>
@@ -641,25 +639,17 @@ $(document).ready(function() {
 
                 <!-- Lampiran -->
                 <div style="page-break-before: always; margin-top: 30px;">
-                    <div style="text-align: center; font-weight: bold; font-size: 12pt; margin-bottom: 20px;">
-                        Lampiran<br>
-                        Nomor: ___________________<br>
-                        Tanggal: ${tanggalFormatted}
+                    <div style="text-align: left; font-size: 11pt; margin-bottom: 20px;">
+                        <div>Lampiran</div>
+                        <div>Nomor :</div>
+                        <div>Tanggal :</div>
                     </div>
-                    <div style="margin-bottom: 15px; text-align: center; font-weight: bold;">
+                    <div style="margin: 20px 0; font-style: italic;">
                         <em>Yth.</em>
                     </div>
-                    <table style="width: 100%; border-collapse: collapse; margin: 12px 0;">
-                        <thead>
-                            <tr>
-                                <th style="border: 1px solid #000; padding: 8px; background-color: #f5f5f5; text-align: center; width: 30px;">No.</th>
-                                <th style="border: 1px solid #000; padding: 8px; background-color: #f5f5f5; text-align: center;">Nama dan Jabatan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${undanganRows}
-                        </tbody>
-                    </table>
+                    <div style="margin-left: 0;">
+                        ${generateUndanganList()}
+                    </div>
                 </div>
             </div>
         `;

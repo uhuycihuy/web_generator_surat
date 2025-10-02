@@ -42,6 +42,7 @@ unset($_SESSION['error']);
                     <div class="logo-icon">
                         <img src="/web_generator_surat/public/assets/logo_kemendikti-saintek.png" alt="Logo Kemendikti" class="logo-img">
                     </div>
+
                     <div class="logo-text">Kementerian Pendidikan Tinggi, Sains dan Teknologi</div>
                 </div>
 

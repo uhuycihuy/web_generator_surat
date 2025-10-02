@@ -215,6 +215,14 @@ try {
                     </div>
 
                     <div class="form-group">
+                        <label class="form-label required">Sapaan</label>
+                        <select id="gender" name="gender" class="form-select">
+                            <option value="Saudara">Saudara</option>
+                            <option value="Saudari">Saudari</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
                         <label class="form-label required">Narahubung</label>
                         <input type="text" id="narahubung" name="narahubung" class="form-input" placeholder="Contoh: Altist Ibnu Hajar">
                     </div>
@@ -222,14 +230,6 @@ try {
                     <div class="form-group">
                         <label class="form-label required">Nomor Narahubung</label>
                         <input type="tel" id="no_narahubung" name="no_narahubung" class="form-input" placeholder="Contoh: 08123456789">
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label required">Sapaan</label>
-                        <select id="gender" name="gender" class="form-select">
-                            <option value="Saudara">Saudara</option>
-                            <option value="Saudari">Saudari</option>
-                        </select>
                     </div>
                 </div>
 
@@ -336,7 +336,7 @@ try {
 
         <div class="preview-section generator-surat">
             <div class="preview-header generator-surat">
-                <h3 id="preview-title">Preview Surat Tugas</h3>
+                <h3 id="preview-title">Preview</h3>
             </div>
             <div class="preview-content" id="previewContent">
                 <div class="preview-placeholder generator-surat">
