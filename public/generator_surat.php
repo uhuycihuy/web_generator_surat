@@ -78,7 +78,7 @@ try {
     <title>Generator Surat - Kementerian Pendidikan Tinggi, Sains, dan Teknologi</title>
     <link rel="stylesheet" href="assets/styles.css">
 </head>
-<body class="generator-surat">
+<body class="generator-surat <?= $role === 'admin' ? 'admin-layout' : '' ?>">
    <?php
         if (session_status() === PHP_SESSION_NONE) {
             session_start();

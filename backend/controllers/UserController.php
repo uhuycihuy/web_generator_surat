@@ -8,11 +8,8 @@ class UserController {
     private $pegawaiModel;
 
     public function __construct() {
-        checkLogin();   // pastikan user sudah login
-
         $database = new Database();
         $this->db = $database->getConnection();
-
         $this->pegawaiModel = new Pegawai($this->db);
     }
 
@@ -26,5 +23,13 @@ class UserController {
     public function getPegawaiByNip($nip) {
         $stmt = $this->pegawaiModel->getByNip($nip);
         return $stmt ? $stmt->fetch(PDO::FETCH_ASSOC) : null;
+    }
+    
+    // === Ambil semua data user ===
+    public function getAllUsers() {
+        $query = "SELECT username, email, role, created_at FROM users ORDER BY created_at DESC";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
