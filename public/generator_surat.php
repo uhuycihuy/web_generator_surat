@@ -5,7 +5,10 @@ require_once __DIR__ . '/../backend/models/Pegawai.php';
 require_once __DIR__ . '/../backend/helpers/utils.php';
 require_once __DIR__ . '/../backend/helpers/PegawaiHelper.php';
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 checkLogin();
 $role = $_SESSION['user']['role'] ?? 'guest';
 

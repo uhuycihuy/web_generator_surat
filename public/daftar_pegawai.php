@@ -2,7 +2,10 @@
 require_once __DIR__ . '/../backend/controllers/UserController.php';
 require_once __DIR__ . '/../backend/helpers/utils.php';
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 checkLogin();
 
 // Inisialisasi controller

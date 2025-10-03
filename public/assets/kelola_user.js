@@ -89,10 +89,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             showFlash(data.message || 'Berhasil disimpan');
-            hideFlash(1800);
+            hideFlash(3000);
+            const scrollY = window.scrollY;
             setTimeout(() => {
                 window.location.reload();
-            }, 900);
+                window.scrollTo(0, scrollY);
+            }, 2500);
         } catch (error) {
             showFlash(error.message || 'Terjadi kesalahan', 'error');
             hideFlash(3200);
@@ -138,10 +140,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             showFlash(data.message || 'User dihapus');
-            hideFlash(1800);
+            hideFlash(3000);
+            const scrollY = window.scrollY; 
             setTimeout(() => {
                 window.location.reload();
-            }, 900);
+                window.scrollTo(0, scrollY);
+            }, 2500);
         } catch (error) {
             showFlash(error.message || 'Terjadi kesalahan', 'error');
             hideFlash(3200);

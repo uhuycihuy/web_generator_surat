@@ -2057,23 +2057,36 @@ body.admin-layout .main-content {
 }
 
 .user-flash {
-    border-radius: 12px;
-    padding: 14px 18px;
-    font-size: 0.95rem;
-    background: #ecfdf5;
-    color: #047857;
-    border: 1px solid #a7f3d0;
-    display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #28a745; /* Hijau success */
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateX(400px);
+    transition: all 0.3s ease-in-out;
 }
 
 .user-flash.is-visible {
-    display: block;
+    opacity: 1;
+    transform: translateX(0);
+    animation: fadeOut 0.3s ease-in 3s forwards;
 }
 
 .user-flash.is-error {
-    background: #fef2f2;
-    border-color: #fecaca;
-    color: #b91c1c;
+    background-color: #dc3545; /* Merah untuk error */
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateX(400px);
+    }
 }
 
 .user-grid {
