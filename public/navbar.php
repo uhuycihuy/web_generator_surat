@@ -2,6 +2,7 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+require_once __DIR__ . '/../backend/helpers/utils.php';
 $username = $_SESSION['user']['username'] ?? "Guest";
 ?>
 
@@ -16,12 +17,12 @@ $username = $_SESSION['user']['username'] ?? "Guest";
 
     <div class="header-buttons">
         <!-- Generator Surat -->
-        <a href="generator_surat.php" class="header-btn">
+        <a href="<?= baseUrl('generator_surat') ?>" class="header-btn">
             <i class="fa-solid fa-file-lines"></i> Generator Surat
         </a>
 
         <!-- Daftar Pegawai -->
-        <a href="daftar_pegawai.php" class="header-btn">
+        <a href="<?= baseUrl('daftar_pegawai') ?>" class="header-btn">
             <i class="fa-solid fa-users"></i> Daftar Pegawai
         </a>
         
@@ -32,7 +33,7 @@ $username = $_SESSION['user']['username'] ?? "Guest";
             </button>
             <div class="profile-menu">
                 <p><i class="fa-solid fa-circle-user"></i> <?= htmlspecialchars($username) ?></p>
-                <a href="logout.php" 
+                     <a href="<?= baseUrl('logout') ?>" 
                    class="logout-btn" 
                    onclick="return confirm('Apakah Anda yakin ingin logout?')">
                    <i class="fa-solid fa-right-from-bracket"></i> Logout

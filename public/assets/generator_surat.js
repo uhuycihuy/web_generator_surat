@@ -1,6 +1,63 @@
 $(document).ready(function() {
     // Custom employee selector
     let selectedEmployees = [];
+    let isResetting = false;
+
+    function timeStringToMinutes(value) {
+        if (!value) return null;
+        const parts = value.split(':');
+        if (parts.length !== 2) return null;
+        const hours = parseInt(parts[0], 10);
+        const minutes = parseInt(parts[1], 10);
+        if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
+        return hours * 60 + minutes;
+    }
+
+    function validateUndanganTime(options = {}) {
+        const { showMessage = false } = options;
+        const endInput = document.getElementById('waktu_akhir');
+
+        if (!endInput || isResetting) {
+            if (endInput) {
+                endInput.setCustomValidity('');
+            }
+            return true;
+        }
+
+        const jenisSurat = $('#jenis_surat').val();
+        if (jenisSurat !== 'undangan') {
+            endInput.setCustomValidity('');
+            return true;
+        }
+
+        const startValue = $('#waktu_awal').val();
+        const endValue = $('#waktu_akhir').val();
+
+        if (!startValue || !endValue) {
+            endInput.setCustomValidity('');
+            return true;
+        }
+
+        const startMinutes = timeStringToMinutes(startValue);
+        const endMinutes = timeStringToMinutes(endValue);
+
+        const message = 'Waktu akhir tidak boleh sebelum waktu mulai';
+
+        if (startMinutes !== null && endMinutes !== null && endMinutes < startMinutes) {
+            endInput.setCustomValidity(message);
+            if (showMessage) {
+                showSuccessMessage('⚠ ' + message);
+                endInput.reportValidity();
+            }
+            return false;
+        }
+
+        endInput.setCustomValidity('');
+        if (showMessage) {
+            endInput.reportValidity();
+        }
+        return true;
+    }
     
     function updateSelectedCount() {
         $('.employee-count').text(`(${selectedEmployees.length})`);
@@ -79,7 +136,7 @@ $(document).ready(function() {
             $('.undangan-external-fields').show();
             $('#label-acara').text('Acara');
             $('#label-pegawai').text('Peserta Undangan');
-            $('#preview-title').text('Preview');
+                $('#preview-title').text('Preview');
             $('#acara').attr('placeholder', 'Contoh: Rapat Koordinasi Penyusunan Program Kerja Tahun 2025');
             
             // Set required fields for undangan
@@ -98,7 +155,7 @@ $(document).ready(function() {
             $('.tugas-external-fields').show();
             $('#label-acara').text('Kegiatan/Acara');
             $('#label-pegawai').text('Daftar Pegawai');
-            $('#preview-title').text('Preview Surat Tugas');
+                $('#preview-title').text('Preview');
             $('#acara').attr('placeholder', 'Contoh: Rekonsiliasi Kebutuhan dan Penyusunan Prognosis Anggaran');
             
             // Set required fields for tugas
@@ -222,10 +279,17 @@ $(document).ready(function() {
     // Update form action based on jenis surat
     function updateFormAction() {
         const jenisSurat = $('#jenis_surat').val();
+        const form = $('#generatorSuratForm');
+        const tugasAction = form.attr('data-action-tugas');
+        const undanganAction = form.attr('data-action-undangan');
         if (jenisSurat === 'undangan') {
-            $('#generatorSuratForm').attr('action', '../backend/controllers/SuratUndanganController.php');
+            if (undanganAction) {
+                form.attr('action', undanganAction);
+            }
         } else {
-            $('#generatorSuratForm').attr('action', '../backend/controllers/SuratTugasController.php');
+            if (tugasAction) {
+                form.attr('action', tugasAction);
+            }
         }
     }
 
@@ -468,6 +532,10 @@ $(document).ready(function() {
         }
 
         // Format waktu
+        const startMinutes = timeStringToMinutes(waktuAwal);
+        const endMinutes = timeStringToMinutes(waktuAkhir);
+        const invalidTimeRange = waktuAwal && waktuAkhir && startMinutes !== null && endMinutes !== null && endMinutes < startMinutes;
+
         let waktuFormatted = '[Waktu belum diisi]';
         if (waktuAwal) {
             waktuFormatted = waktuAwal;
@@ -476,6 +544,10 @@ $(document).ready(function() {
             } else {
                 waktuFormatted += ' - selesai WIB';
             }
+        }
+
+        if (invalidTimeRange) {
+            waktuFormatted = '<span style="color: #dc2626; font-weight: 600;">Waktu akhir tidak boleh sebelum waktu mulai</span>';
         }
 
         function generateUndanganList() {
@@ -689,11 +761,124 @@ $(document).ready(function() {
     // Auto preview on form change (debounced)
     let previewTimeout;
     $('#generatorSuratForm input, #generatorSuratForm textarea, #generatorSuratForm select').on('input change', function() {
+        if (isResetting) {
+            return;
+        }
+
+        validateUndanganTime();
         clearTimeout(previewTimeout);
         previewTimeout = setTimeout(() => {
             generatePreview();
             showUpdateIndicator();
         }, 1000);
+    });
+
+    $('#waktu_awal, #waktu_akhir').on('blur', function() {
+        if (!isResetting) {
+            validateUndanganTime({ showMessage: true });
+        }
+    });
+
+    // Reset handler to clear custom selections and preview
+    $('#generatorSuratForm').on('reset', function() {
+        isResetting = true;
+        clearTimeout(previewTimeout);
+
+        const activeJenisSurat = $('.jenis-option.active').data('jenis') || $('#jenis_surat').val() || 'tugas';
+        const activeJenisUndangan = $('.jenis-option-undangan.active').data('jenis') || $('#jenis_undangan').val() || 'offline';
+
+        setTimeout(() => {
+            selectedEmployees = [];
+
+            // Uncheck and remove selections
+            $('.employee-checkbox').prop('checked', false);
+            $('.employee-item-external').remove();
+            updateSelectedCount();
+
+            $('#pegawai').empty().trigger('change');
+            $('#selected-employees').empty().hide();
+            $('.employee-count').text('(0)');
+
+            // Hide external form section
+            $('#tambah_pegawai_luar').prop('checked', false);
+            $('#pegawai_luar_form').hide();
+
+            // Restore messaging state
+            $('#successMessage').removeClass('show info').text('');
+            $('#updateIndicator').removeClass('show');
+            const waktuAkhirInput = document.getElementById('waktu_akhir');
+            if (waktuAkhirInput) {
+                waktuAkhirInput.setCustomValidity('');
+            }
+
+            if (activeJenisSurat === 'undangan') {
+                $('#jenis_surat').val('undangan');
+
+                $('.jenis-option').removeClass('active');
+                $('.jenis-option[data-jenis="undangan"]').addClass('active');
+
+                $('.tugas-fields').hide();
+                $('.undangan-fields').show();
+                $('.tugas-external-fields').hide();
+                $('.undangan-external-fields').show();
+
+                $('#label-acara').text('Acara');
+                $('#label-pegawai').text('Peserta Undangan');
+                $('#preview-title').text('Preview');
+                $('#acara').attr('placeholder', 'Contoh: Rapat Koordinasi Penyusunan Program Kerja Tahun 2025');
+
+                $('#tgl_mulai, #lokasi_tugas, #dipa').removeAttr('required');
+                $('#tanggal, #waktu_awal, #agenda, #narahubung, #no_narahubung').attr('required', 'required');
+
+                $('#jenis_undangan').val(activeJenisUndangan);
+                $('.jenis-option-undangan').removeClass('active');
+                $('.jenis-option-undangan[data-jenis="' + activeJenisUndangan + '"]').addClass('active');
+
+                if (activeJenisUndangan === 'online') {
+                    $('.offline-fields').hide();
+                    $('.online-fields').show();
+                    $('#lokasi').removeAttr('required');
+                    $('#media').attr('required', 'required');
+                } else {
+                    $('.online-fields').hide();
+                    $('.offline-fields').show();
+                    $('#media').removeAttr('required');
+                    $('#lokasi').attr('required', 'required');
+                }
+            } else {
+                $('#jenis_surat').val('tugas');
+
+                $('.jenis-option').removeClass('active');
+                $('.jenis-option[data-jenis="tugas"]').addClass('active');
+
+                $('.undangan-fields').hide();
+                $('.tugas-fields').show();
+                $('.undangan-external-fields').hide();
+                $('.tugas-external-fields').show();
+
+                $('#label-acara').text('Kegiatan/Acara');
+                $('#label-pegawai').text('Daftar Pegawai');
+                $('#preview-title').text('Preview');
+                $('#acara').attr('placeholder', 'Contoh: Rekonsiliasi Kebutuhan dan Penyusunan Prognosis Anggaran');
+
+                $('#tgl_mulai, #lokasi_tugas, #dipa').attr('required', 'required');
+                $('#tanggal, #waktu_awal, #agenda, #narahubung, #no_narahubung').removeAttr('required');
+                $('#media').removeAttr('required');
+                $('#lokasi').removeAttr('required');
+
+                $('#jenis_undangan').val('offline');
+                $('.jenis-option-undangan').removeClass('active');
+                $('.jenis-option-undangan[data-jenis="offline"]').addClass('active');
+                $('.offline-fields').show();
+                $('.online-fields').hide();
+            }
+
+            updateFormAction();
+
+            isResetting = false;
+
+            generatePreview();
+        }, 0);
     });
 
     // Form validation and download confirmation
@@ -704,6 +889,11 @@ $(document).ready(function() {
             const jenisSurat = $('#jenis_surat').val();
             const message = jenisSurat === 'undangan' ? 'Mohon pilih minimal satu peserta undangan' : 'Mohon pilih minimal satu pegawai yang akan ditugaskan';
             alert(message);
+            return false;
+        }
+
+        if ($('#jenis_surat').val() === 'undangan' && !validateUndanganTime({ showMessage: true })) {
+            e.preventDefault();
             return false;
         }
         

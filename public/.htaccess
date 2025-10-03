@@ -1,0 +1,9 @@
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Redirect direct PHP calls to their clean-route equivalents
+    RewriteCond %{THE_REQUEST} \s/+public/([a-z0-9_-]+)\.php [NC]
+    RewriteRule ^ %1 [R=301,L]
+</IfModule>

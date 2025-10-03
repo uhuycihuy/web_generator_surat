@@ -19,30 +19,52 @@ class User {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    // Update data user (ubah username / password)
-    public function updateUser($no_id, $username, $password = null) {
-        if ($password) {
+    public function getById($no_id) {
+        $query = "SELECT no_id, username, role, password FROM " . $this->table . " WHERE no_id = :no_id LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':no_id', $no_id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function getAdminCount() {
+        $query = "SELECT COUNT(*) as total FROM " . $this->table . " WHERE role = 'admin'";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int)($result['total'] ?? 0);
+    }
+
+    // Update data user (ubah username / password / role)
+    public function updateUser($no_id, $username, $role, $password = null) {
+        $allowedRoles = ['admin', 'user'];
+        if (!in_array($role, $allowedRoles, true)) {
+            throw new InvalidArgumentException('Role tidak valid');
+        }
+
+        if ($password !== null && $password !== '') {
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
             $query = "UPDATE " . $this->table . " 
-                      SET username = :username, password = :password 
+                      SET username = :username, role = :role, password = :password 
                       WHERE no_id = :no_id";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':password', $hashedPassword);
         } else {
             $query = "UPDATE " . $this->table . " 
-                      SET username = :username 
+                      SET username = :username, role = :role 
                       WHERE no_id = :no_id";
             $stmt = $this->conn->prepare($query);
         }
 
         $stmt->bindParam(':username', $username);
-        $stmt->bindParam(':no_id', $no_id);
+        $stmt->bindParam(':role', $role);
+        $stmt->bindParam(':no_id', $no_id, PDO::PARAM_INT);
         return $stmt->execute();
     }
 
     // Ambil semua user (khusus admin)
     public function getAll() {
-        $query = "SELECT no_id, username, role FROM " . $this->table;
+        $query = "SELECT no_id, username, role FROM " . $this->table . " ORDER BY role DESC, username ASC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -50,6 +72,11 @@ class User {
  
     // Tambah user baru (hanya dipanggil oleh AdminController)
     public function addUser($username, $password, $role = 'user') {
+        $allowedRoles = ['admin', 'user'];
+        if (!in_array($role, $allowedRoles, true)) {
+            throw new InvalidArgumentException('Role tidak valid');
+        }
+
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
         $query = "INSERT INTO " . $this->table . " (username, password, role) 
                   VALUES (:username, :password, :role)";
@@ -65,7 +92,7 @@ class User {
     public function deleteUser($no_id) {
         $query = "DELETE FROM " . $this->table . " WHERE no_id = :no_id";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':no_id', $no_id);
+        $stmt->bindParam(':no_id', $no_id, PDO::PARAM_INT);
         return $stmt->execute();
     }
 }

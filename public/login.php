@@ -1,7 +1,8 @@
 <?php
-require_once '../backend/config/database.php';
-require_once '../backend/models/User.php';
-require_once '../backend/controllers/AuthController.php';
+require_once __DIR__ . '/../backend/config/database.php';
+require_once __DIR__ . '/../backend/models/User.php';
+require_once __DIR__ . '/../backend/controllers/AuthController.php';
+require_once __DIR__ . '/../backend/helpers/utils.php';
 
 // Cek error message dari session
 if (session_status() === PHP_SESSION_NONE) {
@@ -9,7 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 if (isset($_SESSION['user'])) {
-    header("Location: generator_surat.php");
+    header('Location: ' . baseUrl('generator_surat'));
     exit;
 }
 
@@ -24,7 +25,7 @@ unset($_SESSION['error']);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Kemendikti Saintek</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="assets/styles.css">
+    <link rel="stylesheet" href="<?= assetUrl('styles.css') ?>">
 </head>     
 <body class="login-page">
     <!-- Notifikasi Logout (auto-hide setelah 3 detik) -->
@@ -40,7 +41,7 @@ unset($_SESSION['error']);
             <div class="login-form-wrapper">
                 <div class="logo-section">
                     <div class="logo-icon">
-                        <img src="/web_generator_surat/public/assets/logo_kemendikti-saintek.png" alt="Logo Kemendikti" class="logo-img">
+                        <img src="<?= assetUrl('logo_kemendikti-saintek.png') ?>" alt="Logo Kemendikti" class="logo-img">
                     </div>
 
                     <div class="logo-text">Kementerian Pendidikan Tinggi, Sains dan Teknologi</div>
@@ -54,7 +55,8 @@ unset($_SESSION['error']);
                 </div>
                 <?php endif; ?>
 
-                <form method="POST" action="login.php?action=login">
+                <form method="POST" action="<?= baseUrl('login') ?>">
+                    <input type="hidden" name="action" value="login">
                     <div class="mb-3">
                         <label for="username" class="form-label">Username</label>
                         <input type="text" class="form-control" id="username" name="username" placeholder="Username anda" required>

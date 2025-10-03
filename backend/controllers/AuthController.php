@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../helpers/utils.php';
 
 class AuthController {
     private $db;
@@ -23,12 +24,12 @@ class AuthController {
                 'username' => $user['username'],
                 'role'     => $user['role']
             ];
-            header("Location: generator_surat.php");
-            exit;
+            redirectTo('generator_surat');
+            return;
         } else {
             $_SESSION['error'] = "Login gagal! Username atau password salah.";
-            header("Location: login.php");
-            exit;
+            redirectTo('login');
+            return;
         }
     }
 
@@ -36,8 +37,7 @@ class AuthController {
     public function logout() {
         session_unset();
         session_destroy();
-        header("Location: ../public/login.php?status=logout");
-        exit;
+        redirectTo('login?status=logout');
     }
 
     // Untuk handle request action=login / logout

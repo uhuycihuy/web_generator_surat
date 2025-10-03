@@ -1,45 +1,22 @@
 <?php
 session_start();
-if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
-    header("Location: login.php");
-    exit;
+
+require_once __DIR__ . '/../backend/helpers/utils.php';
+require_once __DIR__ . '/../backend/config/database.php';
+require_once __DIR__ . '/../backend/models/User.php';
+
+checkLogin();
+
+if (($_SESSION['user']['role'] ?? '') !== 'admin') {
+    redirectTo('generator_surat');
 }
 
-require_once '../backend/config/database.php';
+$database = new Database();
+$db = $database->getConnection();
+$userModel = new User($db);
 
-try {
-    $database = new Database();
-    $db = $database->getConnection();
-    
-    // Debug: cek tabel apa saja yang ada
-    $tables = $db->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
-    
-    // Coba berbagai nama tabel yang mungkin
-    $possibleTables = ['users', 'user', 'admin', 'login', 'account', 'auth'];
-    
-    // Jika tidak ada tabel yang cocok, coba semua tabel
-    if (empty(array_intersect($possibleTables, $tables))) {
-        $possibleTables = $tables;
-    }
-    $userList = [];
-    $tableUsed = '';
-    
-    foreach ($possibleTables as $table) {
-        if (in_array($table, $tables)) {
-            $query = "SELECT * FROM $table";
-            $stmt = $db->prepare($query);
-            $stmt->execute();
-            $userList = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $tableUsed = $table;
-            break;
-        }
-    }
-    
-} catch (Exception $e) {
-    $userList = [];
-    $error = $e->getMessage();
-    $tables = [];
-}
+$users = $userModel->getAll();
+$currentUserId = $_SESSION['user']['id'] ?? null;
 ?>
 
 <!DOCTYPE html>
@@ -48,67 +25,108 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kelola User - Saintek</title>
-    <link rel="stylesheet" href="assets/styles.css">
+    <link rel="stylesheet" href="<?= assetUrl('styles.css') ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
-<body class="daftar-pegawai admin-layout">
+<body class="admin-layout user-management">
     <?php include "sidebar.php"; ?>
 
-    <div class="main-content">
-        <div class="container-pegawai">
-        <div class="header-section">
-            <div class="title-group">
-                <i class="fa-solid fa-users-gear icon-title"></i>
-                <div>
-                    <h1 class="page-title">Kelola User</h1>
-                    <p class="page-subtitle">Daftar semua user sistem</p>
-                </div>
+    <main class="main-content">
+        <section class="page-header">
+            <div class="header-text">
+                <h1 class="page-title">Kelola Akun</h1>
+                <p class="page-subtitle">Atur pengguna internal untuk generator surat</p>
             </div>
-        </div>
+            <div class="header-meta">
+                <span class="meta-item"><i class="fa-solid fa-user-check"></i> <?= count($users) ?> aktif</span>
+                <span class="meta-item"><i class="fa-solid fa-user-shield"></i> <?= $userModel->getAdminCount(); ?> admin</span>
+            </div>
+        </section>
 
-        <div class="table-container">
-            <table class="pegawai-table">
-                <thead>
-                    <tr>
-                        <th>Username</th>
-                        <th>Password</th>
-                        <th>Role</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($userList)): ?>
-                        <tr>
-                            <td colspan="3" style="text-align: center; padding: 40px;">
-                                Tidak ada data user<br>
-                                <small>Tabel tersedia: <?= implode(', ', $tables ?? []) ?></small><br>
-                                <?php if (isset($error)): ?>
-                                    <small style="color: red;">Error: <?= $error ?></small>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php else: ?>
-                        <tr><td colspan="3"><strong>Tabel: <?= $tableUsed ?></strong></td></tr>
-                        <?php foreach ($userList as $user): ?>
-                            <tr>
-                                <td><?= htmlspecialchars($user['username'] ?? $user['user'] ?? 'N/A') ?></td>
-                                <td>
-                                    <span style="font-family: monospace; background: #f8f9fa; padding: 2px 6px; border-radius: 4px;">
-                                        <?= str_repeat('•', min(8, strlen($user['password'] ?? ''))) ?>
+        <section class="user-flash" id="userFlash" hidden></section>
+
+        <section class="user-grid" aria-label="Daftar user terdaftar">
+            <article class="user-card user-card--create" aria-labelledby="create-user-title">
+                <div class="card-header">
+                    <div>
+                        <h2 id="create-user-title">Tambah User</h2>
+                    </div>
+                    <i class="fa-solid fa-user-plus"></i>
+                </div>
+                <form class="user-form" data-action="create">
+                    <div class="form-field">
+                        <label for="username-new">Username</label>
+                        <input type="text" id="username-new" name="username" required autocomplete="off" placeholder="contoh: operator1">
+                    </div>
+                    <div class="form-field">
+                        <label for="password-new">Password</label>
+                        <input type="password" id="password-new" name="password" required minlength="6" placeholder="Minimal 6 karakter">
+                    </div>
+                    <input type="hidden" name="role" value="user">
+                    <p class="form-hint">Akun baru otomatis menjadi role <strong>User</strong>.</p>
+                    <button type="submit" class="btn btn-primary full-width">
+                        <span>Tambah User</span>
+                    </button>
+                </form>
+            </article>
+
+            <?php if (empty($users)): ?>
+                <article class="user-card user-card--empty">
+                    <i class="fa-solid fa-user-slash"></i>
+                    <p>Belum ada user terdaftar. Tambahkan minimal satu akun User.</p>
+                </article>
+            <?php else: ?>
+                <?php foreach ($users as $user): ?>
+                    <article class="user-card" data-user-id="<?= (int)$user['no_id']; ?>">
+                        <header class="card-header">
+                            <div class="card-title-row">
+                                <h2><?= htmlspecialchars($user['username']); ?></h2>
+                                <div class="card-meta">
+                                    <span class="role-chip role-<?= htmlspecialchars($user['role']); ?>">
+                                        <?= $user['role'] === 'admin' ? 'Administrator' : 'User'; ?>
                                     </span>
-                                    <small style="color: #666; margin-left: 8px;">(<?= strlen($user['password'] ?? '') ?> chars)</small>
-                                </td>
-                                <td>
-                                    <span class="role-badge role-<?= $user['role'] ?? 'user' ?>">
-                                        <?= ucfirst($user['role'] ?? 'user') ?>
-                                    </span>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    </div>
+                                    <?php if ((int)$user['no_id'] === (int)$currentUserId): ?>
+                                        <span class="self-chip" title="Akun Anda"><i class="fa-solid fa-circle-user"></i> Anda</span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </header>
+
+                        <div class="card-body" hidden>
+                            <form class="user-form" data-action="update">
+                                <input type="hidden" name="no_id" value="<?= (int)$user['no_id']; ?>">
+                                <div class="form-field">
+                                    <label>Username</label>
+                                    <input type="text" name="username" required value="<?= htmlspecialchars($user['username']); ?>">
+                                </div>
+                                <div class="form-field">
+                                    <label>Password lama <span>(wajib saat mengganti)</span></label>
+                                    <input type="password" name="old_password" minlength="6" placeholder="Masukkan password sekarang">
+                                </div>
+                                <div class="form-field">
+                                    <label>Password baru <span>(opsional)</span></label>
+                                    <input type="password" name="password" minlength="6" placeholder="Biarkan kosong jika tidak diganti">
+                                </div>
+                               
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">
+                                        <span>Simpan</span>
+                                    </button>
+                                    <button type="button" class="btn btn-danger" data-action="delete" data-no-id="<?= (int)$user['no_id']; ?>">
+                                        <i class="fa-solid fa-trash"></i> Hapus
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </section>
+    </main>
+
+    <script>
+    window.USER_ENDPOINT = '<?= baseUrl('backend/controllers/AdminController.php'); ?>';
+    </script>
+    <script src="<?= assetUrl('kelola_user.js'); ?>" defer></script>
 </body>
 </html>

@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../helpers/utils.php';
+
 abstract class BaseController {
     protected function render($template, $data = []) {
         extract($data);
@@ -15,8 +17,7 @@ abstract class BaseController {
     }
     
     protected function redirect($url) {
-        header("Location: $url");
-        exit;
+        redirectTo($url);
     }
     
     protected function downloadFile($content, $filename, $contentType = 'application/msword') {

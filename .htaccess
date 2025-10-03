@@ -1,0 +1,26 @@
+Options -Indexes
+
+<FilesMatch "\.(env|sql|ini|log)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Protect sensitive backend directories from direct access
+    RewriteRule ^backend/(config|helpers|models|templates|temp|vendor)/ - [F,L]
+
+    # Allow direct access to controller endpoints (used for form submissions/AJAX)
+    RewriteRule ^backend/controllers/(.*)$ backend/controllers/$1 [L]
+
+    # Serve public assets without forcing the front controller
+    RewriteRule ^assets/(.*)$ public/assets/$1 [L]
+
+    # Skip rewrites for existing files or directories
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Pretty URL support (all other routes handled by index.php)
+    RewriteRule ^ index.php [L]
+</IfModule>

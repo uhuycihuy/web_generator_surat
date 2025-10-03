@@ -109,10 +109,79 @@ function getNamaPejabatList() {
 }
 
 // Cek apakah user sudah login
+function appBasePath() {
+    if (PHP_SAPI === 'cli') {
+        return '';
+    }
+
+    $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+    $directory  = str_replace('\\', '/', dirname($scriptName));
+    if ($directory === '/' || $directory === '\\') {
+        return '';
+    }
+
+    return rtrim($directory, '/');
+}
+
+function baseUrl($path = '') {
+    if (PHP_SAPI === 'cli') {
+        return $path;
+    }
+
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host   = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $base   = appBasePath();
+
+    $url = $scheme . '://' . $host;
+    if (!empty($base)) {
+        $url .= $base;
+    }
+    $url .= '/';
+
+    if (!empty($path)) {
+        $url .= ltrim($path, '/');
+    }
+
+    return $url;
+}
+
+function routeUrl($path = '', $query = '') {
+    $url = baseUrl($path);
+    if (!empty($query)) {
+        $url .= (strpos($url, '?') === false ? '?' : '&') . ltrim($query, '?');
+    }
+    return $url;
+}
+
+function assetUrl($path) {
+    $normalized = ltrim($path, '/');
+    return baseUrl('assets/' . $normalized);
+}
+
+function redirectTo($path, $status = 302) {
+    $destination = filter_var($path, FILTER_VALIDATE_URL) ? $path : baseUrl($path);
+    header("Location: {$destination}", true, $status);
+    exit;
+}
+
+function currentRoutePath() {
+    if (PHP_SAPI === 'cli') {
+        return '';
+    }
+
+    $requestUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    $base       = appBasePath();
+
+    if (!empty($base) && strpos($requestUri, $base) === 0) {
+        $requestUri = substr($requestUri, strlen($base));
+    }
+
+    return trim($requestUri, '/');
+}
+
 function checkLogin() {
     if (!isset($_SESSION['user'])) {
-        header("Location: login.php");
-        exit;
+        redirectTo('login');
     }
 }
 

@@ -1,16 +1,13 @@
 <?php
 // Integrasi dengan database real
-require_once '../backend/config/database.php';
-require_once '../backend/models/Pegawai.php';
-require_once '../backend/helpers/utils.php';
-require_once '../backend/helpers/PegawaiHelper.php';
+require_once __DIR__ . '/../backend/config/database.php';
+require_once __DIR__ . '/../backend/models/Pegawai.php';
+require_once __DIR__ . '/../backend/helpers/utils.php';
+require_once __DIR__ . '/../backend/helpers/PegawaiHelper.php';
 
 session_start();
-// Cek apakah user sudah login
-if (!isset($_SESSION['user'])) {
-    header("Location: login.php");
-    exit;
-}
+checkLogin();
+$role = $_SESSION['user']['role'] ?? 'guest';
 
 // Initialize database dan models
 try {
@@ -76,16 +73,10 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generator Surat - Kementerian Pendidikan Tinggi, Sains, dan Teknologi</title>
-    <link rel="stylesheet" href="assets/styles.css">
+    <link rel="stylesheet" href="<?= assetUrl('styles.css') ?>">
 </head>
 <body class="generator-surat <?= $role === 'admin' ? 'admin-layout' : '' ?>">
    <?php
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        $role = $_SESSION['user']['role'] ?? 'guest';
-
         if ($role === 'admin') {
             include "sidebar.php";
         } else {
@@ -113,7 +104,11 @@ try {
                 </div>
             </div>
 
-            <form id="generatorSuratForm" method="POST" action="../backend/controllers/SuratTugasController.php">
+        <form id="generatorSuratForm"
+            method="POST"
+            action="<?= baseUrl('export_surat_tugas.php') ?>"
+            data-action-tugas="<?= baseUrl('export_surat_tugas.php') ?>"
+            data-action-undangan="<?= baseUrl('export_surat_undangan.php') ?>">
                 <input type="hidden" name="jenis_surat" id="jenis_surat" value="tugas">
                 <input type="hidden" name="jenis_undangan" id="jenis_undangan" value="offline">
 
@@ -456,6 +451,6 @@ try {
             return { nama_pegawai: 'Data tidak ditemukan', nip: key, pangkat: '', golongan: '', jabatan: '' };
         };
     </script>
-    <script src="assets/generator_surat.js"></script>
+    <script src="<?= assetUrl('generator_surat.js') ?>"></script>
 </body>
 </html>

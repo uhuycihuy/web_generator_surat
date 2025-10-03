@@ -1,18 +1,20 @@
 <?php
-require_once '../backend/controllers/UserController.php';
+require_once __DIR__ . '/../backend/controllers/UserController.php';
+require_once __DIR__ . '/../backend/helpers/utils.php';
 
 session_start();
-// Cek apakah user sudah login
-if (!isset($_SESSION['user'])) {
-    header("Location: login.php");
-    exit;
-}
+checkLogin();
 
 // Inisialisasi controller
 $userController = new UserController();
 
 // Ambil semua data pegawai
 $pegawaiList = $userController->getAllPegawai();
+$role = $_SESSION['user']['role'] ?? 'guest';
+$bodyClasses = 'daftar-pegawai';
+if ($role === 'admin') {
+    $bodyClasses .= ' admin-layout';
+}
 ?>
 
 <!DOCTYPE html>
@@ -21,23 +23,16 @@ $pegawaiList = $userController->getAllPegawai();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar Pegawai - Saintek</title>
-    <link rel="stylesheet" href="assets/styles.css">
+    <link rel="stylesheet" href="<?= assetUrl('styles.css') ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
-<body class="daftar-pegawai">
-    <?php
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        $role = $_SESSION['user']['role'] ?? 'guest';
-
-        if ($role === 'admin') {
-            include "sidebar.php";
-        } else {
-            include "navbar.php";
-        }
-    ?>
+<body class="<?= $bodyClasses ?>">
+    <?php if ($role === 'admin'): ?>
+        <?php include "sidebar.php"; ?>
+        <main class="main-content">
+    <?php else: ?>
+        <?php include "navbar.php"; ?>
+    <?php endif; ?>
 
     <div class="container-pegawai">
         <div class="header-section">
@@ -158,6 +153,10 @@ $pegawaiList = $userController->getAllPegawai();
             </form>
         </div>
     </div>
+    <?php endif; ?>
+
+    <?php if ($role === 'admin'): ?>
+        </main>
     <?php endif; ?>
 
     <script>
@@ -361,7 +360,7 @@ $pegawaiList = $userController->getAllPegawai();
                 formData.append('action', 'delete');
                 formData.append('nip', nip);
                 
-                fetch('../backend/controllers/AdminController.php', {
+                fetch('<?= baseUrl('backend/controllers/AdminController.php') ?>', {
                     method: 'POST',
                     body: formData
                 })
@@ -414,7 +413,7 @@ $pegawaiList = $userController->getAllPegawai();
                 formData.append('original_nip', document.getElementById('originalNip').value);
             }
             
-            fetch('../backend/controllers/AdminController.php', {
+            fetch('<?= baseUrl('backend/controllers/AdminController.php') ?>', {
                 method: 'POST',
                 body: formData
             })
