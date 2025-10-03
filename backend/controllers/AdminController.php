@@ -105,9 +105,20 @@ try {
                     throw new InvalidArgumentException('Username sudah digunakan');
                 }
 
-                $userModel->addUser($username, $password, $role);
+                if (!$userModel->addUser($username, $password, $role)) {
+                    throw new RuntimeException('Gagal menambahkan user');
+                }
 
-                echo json_encode(['success' => true, 'message' => 'User berhasil ditambahkan']);
+                $createdUser = $userModel->getByUsername($username) ?: [];
+                unset($createdUser['password']);
+
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'User berhasil ditambahkan',
+                    'data' => [
+                        'user' => $createdUser,
+                    ],
+                ]);
                 break;
 
             case 'update':
@@ -127,6 +138,10 @@ try {
                 $targetUser = $userModel->getById($noId);
                 if (!$targetUser) {
                     throw new RuntimeException('User tidak ditemukan');
+                }
+
+                if (($targetUser['role'] ?? 'user') === 'admin') {
+                    throw new RuntimeException('Akun administrator tidak dapat diubah');
                 }
 
                 $currentPasswordHash = $targetUser['password'] ?? '';
@@ -156,7 +171,16 @@ try {
                     $_SESSION['user']['role'] = $role;
                 }
 
-                echo json_encode(['success' => true, 'message' => 'Perubahan user berhasil disimpan']);
+                $updatedUser = $userModel->getById($noId) ?: [];
+                unset($updatedUser['password']);
+
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Perubahan user berhasil disimpan',
+                    'data' => [
+                        'user' => $updatedUser,
+                    ],
+                ]);
                 break;
 
             case 'delete':
@@ -175,13 +199,23 @@ try {
                     throw new RuntimeException('User tidak ditemukan');
                 }
 
+                if (($targetUser['role'] ?? 'user') === 'admin') {
+                    throw new RuntimeException('Akun administrator tidak dapat dihapus');
+                }
+
                 if (($targetUser['role'] ?? 'user') === 'admin' && $currentAdminCount <= 1) {
                     throw new RuntimeException('Tidak dapat menghapus admin terakhir');
                 }
 
                 $userModel->deleteUser($noId);
 
-                echo json_encode(['success' => true, 'message' => 'User berhasil dihapus']);
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'User berhasil dihapus',
+                    'data' => [
+                        'deleted_id' => $noId,
+                    ],
+                ]);
                 break;
 
             default:

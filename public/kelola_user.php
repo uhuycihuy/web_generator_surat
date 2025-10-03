@@ -19,6 +19,8 @@ $userModel = new User($db);
 
 $users = $userModel->getAll();
 $currentUserId = $_SESSION['user']['id'] ?? null;
+$adminCount = $userModel->getAdminCount();
+$totalUserCount = count($users);
 ?>
 
 <!DOCTYPE html>
@@ -40,8 +42,14 @@ $currentUserId = $_SESSION['user']['id'] ?? null;
                 <p class="page-subtitle">Atur pengguna internal untuk generator surat</p>
             </div>
             <div class="header-meta">
-                <span class="meta-item"><i class="fa-solid fa-user-check"></i> <?= count($users) ?> aktif</span>
-                <span class="meta-item"><i class="fa-solid fa-user-shield"></i> <?= $userModel->getAdminCount(); ?> admin</span>
+                <span class="meta-item" data-user-count>
+                    <i class="fa-solid fa-user-check" aria-hidden="true"></i>
+                    <span class="count-number"><?= $totalUserCount; ?></span> aktif
+                </span>
+                <span class="meta-item" data-admin-count>
+                    <i class="fa-solid fa-user-shield" aria-hidden="true"></i>
+                    <span class="count-number"><?= $adminCount; ?></span> admin
+                </span>
             </div>
         </section>
 
@@ -79,7 +87,13 @@ $currentUserId = $_SESSION['user']['id'] ?? null;
                 </article>
             <?php else: ?>
                 <?php foreach ($users as $user): ?>
-                    <article class="user-card" data-user-id="<?= (int)$user['no_id']; ?>">
+                    <?php
+                        $userId = (int)$user['no_id'];
+                        $isAdmin = ($user['role'] ?? 'user') === 'admin';
+                        $isSelf = $userId === (int)$currentUserId;
+                        $bodyId = 'user-body-' . $userId;
+                    ?>
+                    <article class="user-card<?= $isAdmin ? ' user-card--admin' : ''; ?>" data-user-id="<?= $userId; ?>" data-role="<?= htmlspecialchars($user['role']); ?>">
                         <header class="card-header">
                             <div class="card-title-row">
                                 <h2><?= htmlspecialchars($user['username']); ?></h2>
@@ -87,39 +101,49 @@ $currentUserId = $_SESSION['user']['id'] ?? null;
                                     <span class="role-chip role-<?= htmlspecialchars($user['role']); ?>">
                                         <?= $user['role'] === 'admin' ? 'Administrator' : 'User'; ?>
                                     </span>
-                                    <?php if ((int)$user['no_id'] === (int)$currentUserId): ?>
+                                    <?php if ($isSelf): ?>
                                         <span class="self-chip" title="Akun Anda"><i class="fa-solid fa-circle-user"></i> Anda</span>
                                     <?php endif; ?>
                                 </div>
                             </div>
                         </header>
 
-                        <div class="card-body" hidden>
-                            <form class="user-form" data-action="update">
-                                <input type="hidden" name="no_id" value="<?= (int)$user['no_id']; ?>">
-                                <div class="form-field">
-                                    <label>Username</label>
-                                    <input type="text" name="username" required value="<?= htmlspecialchars($user['username']); ?>">
-                                </div>
-                                <div class="form-field">
-                                    <label>Password lama <span>(wajib saat mengganti)</span></label>
-                                    <input type="password" name="old_password" minlength="6" placeholder="Masukkan password sekarang">
-                                </div>
-                                <div class="form-field">
-                                    <label>Password baru <span>(opsional)</span></label>
-                                    <input type="password" name="password" minlength="6" placeholder="Biarkan kosong jika tidak diganti">
-                                </div>
+                        <?php if ($isAdmin): ?>
+                            <div class="card-body card-body--static">
+                                <p class="admin-note">
+                                   
+                                    Akun administrator tidak dapat diubah dari dashboard.
+                                </p>
                                
-                                <div class="form-actions">
-                                    <button type="submit" class="btn btn-primary">
-                                        <span>Simpan</span>
-                                    </button>
-                                    <button type="button" class="btn btn-danger" data-action="delete" data-no-id="<?= (int)$user['no_id']; ?>">
-                                        <i class="fa-solid fa-trash"></i> Hapus
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+                            </div>
+                        <?php else: ?>
+                            <div class="card-body" id="<?= $bodyId; ?>">
+                                <form class="user-form" data-action="update">
+                                    <input type="hidden" name="no_id" value="<?= $userId; ?>">
+                                    <div class="form-field">
+                                        <label>Username</label>
+                                        <input type="text" name="username" required value="<?= htmlspecialchars($user['username']); ?>">
+                                    </div>
+                                    <div class="form-field">
+                                        <label>Password lama <span>(wajib saat mengganti)</span></label>
+                                        <input type="password" name="old_password" minlength="6" placeholder="Masukkan password sekarang">
+                                    </div>
+                                    <div class="form-field">
+                                        <label>Password baru <span>(opsional)</span></label>
+                                        <input type="password" name="password" minlength="6" placeholder="Biarkan kosong jika tidak diganti">
+                                    </div>
+
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn-primary">
+                                            <span>Simpan</span>
+                                        </button>
+                                        <button type="button" class="btn btn-danger" data-action="delete" data-no-id="<?= $userId; ?>">
+                                            <i class="fa-solid fa-trash"></i> Hapus
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        <?php endif; ?>
                     </article>
                 <?php endforeach; ?>
             <?php endif; ?>
@@ -128,6 +152,7 @@ $currentUserId = $_SESSION['user']['id'] ?? null;
 
     <script>
     window.USER_ENDPOINT = '<?= baseUrl('backend/controllers/AdminController.php'); ?>';
+    window.CURRENT_USER_ID = <?= $currentUserId !== null ? (int)$currentUserId : 'null'; ?>;
     </script>
     <script src="<?= assetUrl('kelola_user.js'); ?>" defer></script>
 </body>
