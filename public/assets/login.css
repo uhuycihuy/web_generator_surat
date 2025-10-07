@@ -22,7 +22,7 @@ body.login-page {
 .overlay-layer {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.65);
   z-index: 2;
 }
 
@@ -41,7 +41,7 @@ body.login-page {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 40px 60px;
+  padding: 50px 70px;
   color: #fff;
 }
 .logo-header {
@@ -50,8 +50,8 @@ body.login-page {
   gap: 14px;
 }
 .logo-header img {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
   object-fit: contain;
   background: transparent; 
   border-radius: 0; 
@@ -84,16 +84,16 @@ body.login-page {
 
 /* LOGIN CARD */
 .login-card {
-  width: 85%;         
-  max-width: 900px;    
-  background: #f3f4f6;
-  border-radius: 24px;
-  padding: 130px 50px;
-  box-shadow: 0 12px 36px rgba(0,0,0,0.18);
+  width: 85% !important;         
+  max-width: 520px !important;    
+  background: #f3f4f6 !important;
+  border-radius: 24px !important;
+  padding: 130px 45px !important;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.18) !important;
 }
 
 /* TEKS */
-.login-title { font-size: 35px; font-weight: 800; margin-bottom:12px; color:#0f172a; }
+.login-title { font-size: 32px; font-weight: 800; margin-bottom:12px; color:#0f172a; }
 .login-subtitle { font-size: 14px; color:#6b7280; margin-bottom:40px; }
 
 .alert { padding:12px 16px; border-radius:10px; margin-bottom:28px; font-size:14px; }
@@ -131,17 +131,72 @@ body.login-page {
 .logout-notification { position: fixed; top:20px; right:20px; background:#10B981; color:white; padding:12px 20px; border-radius:10px; z-index:999; }
 
 /* RESPONSIVE */
-@media (max-width: 992px) {
-  .background-layer { background-size: cover; background-position: center top; }
-  .split { flex-direction: column; }
-  .left-panel { padding: 40px 32px; min-height: 260px; }
-  .hero-text { font-size: 28px; max-width: 100%; }
-  .right-panel { width:100%; padding: 30px; justify-content:center; }
-  .login-card { width: 92%; max-width:720px; margin: 0 auto; }
+
+/* Laptop besar (1440px ke atas) */
+@media (min-width: 1440px) {
+  .login-card { 
+    max-width: 540px; 
+    padding: 55px 50px;
+  }
+  .hero-text { font-size: 38px; }
 }
-@media (max-width: 480px) {
-  .hero-text { font-size: 22px; }
+
+/* Laptop sedang (1024px - 1439px) */
+@media (max-width: 1439px) and (min-width: 1024px) {
+  .login-card { 
+    max-width: 500px; 
+    padding: 48px 42px;
+  }
+  .hero-text { font-size: 34px; }
+  .left-panel { padding: 35px 50px; }
+}
+
+/* Laptop kecil & tablet landscape (768px - 1023px) */
+@media (max-width: 1023px) and (min-width: 768px) {
+  .login-card { 
+    max-width: 460px; 
+    padding: 45px 38px;
+  }
+  .login-title { font-size: 28px; }
+  .hero-text { font-size: 30px; }
+  .left-panel { padding: 32px 40px; }
+}
+
+/* Tablet portrait (577px - 767px) */
+@media (max-width: 767px) and (min-width: 577px) {
+  .background-layer { background-size: cover; background-position: center; }
+  .split { flex-direction: column; }
+  .left-panel { padding: 30px; min-height: 200px; }
+  .hero-text { font-size: 26px; max-width: 100%; }
+  .right-panel { width:100%; padding: 25px; justify-content:center; }
+  .login-card { 
+    width: 90%; 
+    max-width: 480px; 
+    padding: 40px 35px;
+    margin: 0 auto; 
+  }
+  .login-title { font-size: 26px; }
+}
+
+/* Mobile (max 576px) */
+@media (max-width: 576px) {
+  .background-layer { background-size: cover; background-position: center; }
+  .split { flex-direction: column; }
+  .left-panel { padding: 24px; min-height: 180px; }
+  .hero-text { font-size: 22px; max-width: 100%; }
   .logo-header img { width:44px; height:44px; }
   .logo-header h1 { font-size:13px; }
-  .login-card { padding: 40px 28px; border-radius:14px; }
+  .right-panel { width:100%; padding: 20px; justify-content:center; }
+  .login-card { 
+    width: 92%; 
+    max-width: 400px; 
+    padding: 35px 28px; 
+    border-radius:18px;
+    margin: 0 auto;
+  }
+  .login-title { font-size: 24px; }
+  .login-subtitle { font-size: 13px; margin-bottom: 32px; }
+  .form-group { margin-bottom: 22px; }
+  .form-control { padding: 12px 14px; font-size: 13px; }
+  .btn-login { padding: 12px; font-size: 14px; }
 }
