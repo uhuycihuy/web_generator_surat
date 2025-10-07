@@ -4,7 +4,6 @@ require_once __DIR__ . '/../backend/models/User.php';
 require_once __DIR__ . '/../backend/controllers/AuthController.php';
 require_once __DIR__ . '/../backend/helpers/utils.php';
 
-// Cek error message dari session
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -19,94 +18,80 @@ unset($_SESSION['error']);
 ?>
 
 <!DOCTYPE html>
-<html lang="en">         
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Kemendikti Saintek</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="<?= assetUrl('styles.css') ?>">
-</head>     
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&family=Roboto:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/web_generator_surat/public/assets/login.css?v=<?= time() ?>">
+</head>
+
 <body class="login-page">
-    <!-- Notifikasi Logout (auto-hide setelah 3 detik) -->
+
     <?php if (isset($_GET['status']) && $_GET['status'] === 'logout'): ?>
         <div class="logout-notification" id="logoutNotif">
-            Anda berhasil logout.
+            ✓ Anda berhasil logout
         </div>
     <?php endif; ?>
 
-    <div class="login-container">
-        <!-- Left Side - Login Form -->
-        <div class="login-left">
-            <div class="login-form-wrapper">
-                <div class="logo-section">
-                    <div class="logo-icon">
-                        <img src="<?= assetUrl('logo_kemendikti-saintek.png') ?>" alt="Logo Kemendikti" class="logo-img">
+    <!-- Layer background + overlay -->
+    <div class="background-layer"></div>
+    <div class="overlay-layer"></div>
+
+    <!-- SPLIT LAYOUT -->
+    <div class="split">
+        <!-- LEFT PANEL: logo atas + hero text bawah -->
+        <div class="left-panel">
+            <div class="logo-header">
+                <img src="<?= assetUrl('logo_kemendikti-saintek.png') ?>" alt="Logo Kemendikti">
+                <h1>Kementerian Pendidikan Tinggi,<br>Sains, dan Teknologi</h1>
+            </div>
+
+            <div class="hero-text">
+                Buat Surat Resmi Lebih<br>Cepat dan Tepat.
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: floating login card (mengonsumsi setengah layar kanan) -->
+        <div class="right-panel">
+            <div class="login-card">
+                <h2 class="login-title">Selamat Datang!</h2>
+                <p class="login-subtitle">Masuk untuk memulai pembuatan surat.</p>
+
+                <?php if ($error): ?>
+                    <div class="alert alert-danger" role="alert">
+                        <?= htmlspecialchars($error) ?>
                     </div>
-
-                    <div class="logo-text">Kementerian Pendidikan Tinggi, Sains dan Teknologi</div>
-                </div>
-
-                <h2 class="welcome-title">Web Generator Surat Tugas & Undangan</h2>
-
-                <?php if($error): ?>
-                <div class="alert alert-danger" role="alert">
-                    <?= htmlspecialchars($error) ?>
-                </div>
                 <?php endif; ?>
 
                 <form method="POST" action="<?= baseUrl('login') ?>">
                     <input type="hidden" name="action" value="login">
-                    <div class="mb-3">
+
+                    <div class="form-group">
                         <label for="username" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="username" name="username" placeholder="Username anda" required>
+                        <input type="text" id="username" name="username" class="form-control" placeholder="Masukkan username" required>
                     </div>
-                    <div class="mb-3">
+
+                    <div class="form-group">
                         <label for="password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="password" name="password" placeholder="Masukkan password" required>
+                        <input type="password" id="password" name="password" class="form-control" placeholder="Masukkan password" required>
                     </div>
-                    <!-- Remember Me & Forgot Password 
-                    <div class="remember-forgot">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="rememberMe">
-                            <label class="form-check-label" for="rememberMe">
-                                Ingat saya
-                            </label>
-                        </div>
-                    </div>
-                    -->
 
-                    <button type="submit" class="btn btn-login">Login</button>
+                    <button type="submit" class="btn-login">Masuk</button>
                 </form>
-            </div>
-        </div>
-
-        <!-- Right Side - Image Background -->
-        <div class="login-right">
-            <div class="decorative-circle circle-1"></div>
-            <div class="decorative-circle circle-2"></div>
-            
-            <div class="right-content">
-                <h1 class="right-title">Kemendikti Saintek</h1>
-                <p class="right-description">
-                    Sistem Generator Surat Tugas & Undangan yang membantu menghasilkan surat resmi secara otomatis, akurat, dan profesional.
-                </p>
             </div>
         </div>
     </div>
 
     <script>
-        // Auto-hide notifikasi logout setelah 3 detik
-        const logoutNotif = document.getElementById('logoutNotif');
-        if (logoutNotif) {
-            // Bersihkan URL dari parameter status=logout
+        const notif = document.getElementById('logoutNotif');
+        if (notif) {
             if (window.location.search.includes('status=logout')) {
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
-
-            setTimeout(() => {
-                logoutNotif.remove();
-            }, 3000);
+            setTimeout(() => notif.remove(), 3000);
         }
     </script>
 </body>
