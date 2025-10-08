@@ -25,7 +25,8 @@ unset($_SESSION['error']);
     <title>Login - Kemendikti Saintek</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&family=Roboto:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/web_generator_surat/public/assets/login.css?v=<?= time() ?>">
+    <link rel="icon" href="<?= assetUrl('logo_kemendikti-saintek.png') ?>" type="image/png" sizes="64x64">
+    <link rel="stylesheet" href="<?= assetUrl('styles.css') ?>?v=<?= time() ?>">
 </head>
 
 <body class="login-page">

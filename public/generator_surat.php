@@ -77,6 +77,7 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generator Surat - Kementerian Pendidikan Tinggi, Sains, dan Teknologi</title>
     <link rel="stylesheet" href="<?= assetUrl('styles.css') ?>">
+    <link rel="icon" href="<?= assetUrl('logo_kemendikti-saintek.png') ?>" type="image/png" sizes="64x64">
 </head>
 <body class="generator-surat <?= $role === 'admin' ? 'admin-layout' : '' ?>">
    <?php
@@ -100,10 +101,10 @@ try {
             <!-- Jenis Surat Selector -->
             <div class="jenis-selector">
                 <div class="jenis-option active" data-jenis="tugas">
-                    📝 Surat Tugas
+                    Surat Tugas
                 </div>
                 <div class="jenis-option" data-jenis="undangan">
-                    ✉️ Surat Undangan
+                    Surat Undangan
                 </div>
             </div>
 
@@ -286,8 +287,8 @@ try {
                                 <input type="text" class="form-input" id="jabatan_luar_undangan" placeholder="Jabatan/Instansi">
                             </div>
                         </div>
-                        <button type="button" class="btn btn-secondary" id="tambah_luar" style="font-size: 12px; padding: 6px 12px;">
-                            ➕ Tambah
+                        <button type="button" class="btn btn-success" id="tambah_luar" style="font-size: 12px; padding: 6px 12px;">
+                            Tambah
                         </button>
                     </div>
                 </div>

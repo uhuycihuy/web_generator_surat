@@ -262,7 +262,9 @@ $(document).ready(function() {
             const btn = $(this);
             btn.html('✓ Ditambahkan').addClass('btn-success').removeClass('btn-secondary');
             setTimeout(() => {
-                btn.html('➕ Tambah').removeClass('btn-success').addClass('btn-secondary');
+                // reset text without the plus icon and keep green styling
+                btn.html('Tambah');
+                btn.removeClass('btn-secondary').addClass('btn-success');
             }, 2000);
             
             // Clear form fields

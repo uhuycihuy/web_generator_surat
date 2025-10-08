@@ -27,6 +27,7 @@ if ($role === 'admin') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar Pegawai - Saintek</title>
     <link rel="stylesheet" href="<?= assetUrl('styles.css') ?>">
+    <link rel="icon" href="<?= assetUrl('logo_kemendikti-saintek.png') ?>" type="image/png" sizes="64x64">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body class="<?= $bodyClasses ?>">

@@ -87,6 +87,156 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    /* --- Modal handling for create/edit --- */
+    function createModalNode() {
+        const tpl = document.createElement('template');
+        tpl.innerHTML = `
+            <div class="user-modal" role="dialog" aria-modal="true" hidden>
+                <div class="user-modal-backdrop"></div>
+                <div class="user-modal-panel">
+                    <header class="modal-header">
+                        <h3 class="modal-title">Modal</h3>
+                        <button class="modal-close btn btn-secondary">×</button>
+                    </header>
+                    <div class="modal-body">
+                        <form id="userModalForm">
+                            <input type="hidden" name="no_id" value="">
+                            <div class="form-field">
+                                <label>Username</label>
+                                <input type="text" name="username" required autocomplete="off">
+                            </div>
+                            <div class="form-field">
+                                <label>Password lama <span>(wajib saat mengganti)</span></label>
+                                <input type="password" name="old_password" minlength="6" placeholder="Masukkan password sekarang jika ingin ganti">
+                            </div>
+                            <div class="form-field">
+                                <label>Password baru <span>(opsional)</span></label>
+                                <input type="password" name="password" minlength="6" placeholder="Biarkan kosong jika tidak diganti">
+                            </div>
+                            <input type="hidden" name="role" value="user">
+                            <div class="form-actions modal-actions">
+                                <button type="submit" class="btn btn-primary">Simpan</button>
+                                <button type="button" class="btn btn-secondary modal-cancel">Batal</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        `.trim();
+        return tpl.content.firstElementChild;
+    }
+
+    let modal = null;
+
+    function ensureModal() {
+        if (!modal) {
+            modal = createModalNode();
+            document.body.appendChild(modal);
+
+            // close handlers
+            modal.querySelector('.modal-close').addEventListener('click', () => closeModal());
+            modal.querySelector('.modal-cancel').addEventListener('click', () => closeModal());
+            modal.querySelector('.user-modal-backdrop').addEventListener('click', () => closeModal());
+
+            // form submit -> map to submitForm
+            const mform = modal.querySelector('#userModalForm');
+            mform.addEventListener('submit', (ev) => {
+                ev.preventDefault();
+                const formEl = ev.target;
+                const noId = formEl.querySelector('input[name="no_id"]').value;
+                const action = noId ? 'update' : 'create';
+                submitForm(formEl, action).then(() => closeModal());
+            });
+
+            // keyboard accessibility: close on ESC
+            modal.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeModal();
+                }
+            });
+        }
+        return modal;
+    }
+
+    function openCreateModal() {
+        const m = ensureModal();
+        m.querySelector('.modal-title').textContent = 'Buat User Baru';
+        const form = m.querySelector('#userModalForm');
+        form.reset();
+        form.querySelector('input[name="no_id"]').value = '';
+        form.querySelector('input[name="role"]').value = 'user';
+        m.hidden = false;
+        document.documentElement.classList.add('modal-open');
+        requestAnimationFrame(() => {
+            m.classList.add('open');
+            // autofocus the first input
+            const first = m.querySelector('input[name="username"]');
+            if (first) first.focus();
+        });
+    }
+
+    function openEditModal(userId) {
+        const card = userGrid.querySelector(`.user-card[data-user-id="${escapeSelector(userId)}"]`);
+        if (!card) return;
+        const username = card.querySelector('h2')?.textContent?.trim() || '';
+        const m = ensureModal();
+        m.querySelector('.modal-title').textContent = 'Edit User';
+        const form = m.querySelector('#userModalForm');
+        form.querySelector('input[name="no_id"]').value = userId;
+        form.querySelector('input[name="username"]').value = username;
+        form.querySelector('input[name="role"]').value = card.dataset.role || 'user';
+        form.querySelector('input[name="password"]').value = '';
+        m.hidden = false;
+        requestAnimationFrame(() => m.classList.add('open'));
+    }
+
+    function closeModal() {
+        if (!modal) return;
+        modal.classList.remove('open');
+        document.documentElement.classList.remove('modal-open');
+        setTimeout(() => {
+            if (modal) modal.hidden = true;
+        }, 250);
+    }
+
+    /* Confirm modal utility (promise-based) */
+    function confirmModal(title, message) {
+        return new Promise((resolve) => {
+            const tpl = document.createElement('template');
+            tpl.innerHTML = `
+                <div class="user-modal confirm-modal" role="dialog" aria-modal="true">
+                    <div class="user-modal-backdrop"></div>
+                    <div class="user-modal-panel">
+                        <header class="modal-header">
+                            <h3 class="modal-title">${title}</h3>
+                        </header>
+                        <div class="modal-body">
+                            <p>${message}</p>
+                            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+                                <button class="btn btn-secondary confirm-cancel">Batal</button>
+                                <button class="btn btn-danger confirm-ok">Hapus</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `.trim();
+            const node = tpl.content.firstElementChild;
+            document.body.appendChild(node);
+            const backdrop = node.querySelector('.user-modal-backdrop');
+            const ok = node.querySelector('.confirm-ok');
+            const cancel = node.querySelector('.confirm-cancel');
+
+            function cleanup(result) {
+                node.remove();
+                resolve(result);
+            }
+
+            ok.addEventListener('click', () => cleanup(true));
+            cancel.addEventListener('click', () => cleanup(false));
+            backdrop.addEventListener('click', () => cleanup(false));
+        });
+    }
+
     function buildUserCardMarkup(user) {
         const isAdmin = user.role === 'admin';
         const isSelf = Number(user.no_id) === currentUserId;
@@ -294,9 +444,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const card = button.closest('.user-card');
         const username = card ? card.querySelector('h2')?.textContent?.trim() : '';
 
-        if (!confirm(`Hapus user ${username || ''}?`)) {
-            return;
-        }
+        const confirmed = await confirmModal('Konfirmasi Hapus', `Hapus user ${username || ''}?`);
+        if (!confirmed) return;
 
         const formData = new FormData();
         formData.append('action', 'delete');
@@ -351,4 +500,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     updateEmptyState();
+
+    // Create button (open modal)
+    const openCreateBtn = document.getElementById('openCreateUser');
+    if (openCreateBtn) {
+        openCreateBtn.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            openCreateModal();
+        });
+    }
+
+    // Edit buttons inside grid
+    userGrid.addEventListener('click', (ev) => {
+        const editBtn = ev.target.closest('[data-action="edit"]');
+        if (editBtn) {
+            ev.preventDefault();
+            const uid = editBtn.getAttribute('data-user-id');
+            openEditModal(uid);
+            return;
+        }
+    });
 });

@@ -30,6 +30,7 @@ $totalUserCount = count($users);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kelola User - Saintek</title>
     <link rel="stylesheet" href="<?= assetUrl('styles.css') ?>">
+    <link rel="icon" href="<?= assetUrl('logo_kemendikti-saintek.png') ?>" type="image/png" sizes="64x64">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body class="admin-layout user-management">
@@ -60,24 +61,12 @@ $totalUserCount = count($users);
                 <div class="card-header">
                     <div>
                         <h2 id="create-user-title">Tambah User</h2>
+                        <p class="card-subtitle">Buat akun baru dengan cepat</p>
                     </div>
-                    <i class="fa-solid fa-user-plus"></i>
+                    <div class="card-actions">
+                        <button class="btn btn-primary" id="openCreateUser">Tambah</button>
+                    </div>
                 </div>
-                <form class="user-form" data-action="create">
-                    <div class="form-field">
-                        <label for="username-new">Username</label>
-                        <input type="text" id="username-new" name="username" required autocomplete="off" placeholder="contoh: operator1">
-                    </div>
-                    <div class="form-field">
-                        <label for="password-new">Password</label>
-                        <input type="password" id="password-new" name="password" required minlength="6" placeholder="Minimal 6 karakter">
-                    </div>
-                    <input type="hidden" name="role" value="user">
-                    <p class="form-hint">Akun baru otomatis menjadi role <strong>User</strong>.</p>
-                    <button type="submit" class="btn btn-primary full-width">
-                        <span>Tambah User</span>
-                    </button>
-                </form>
             </article>
 
             <?php if (empty($users)): ?>
@@ -117,31 +106,19 @@ $totalUserCount = count($users);
                                
                             </div>
                         <?php else: ?>
-                            <div class="card-body" id="<?= $bodyId; ?>">
-                                <form class="user-form" data-action="update">
-                                    <input type="hidden" name="no_id" value="<?= $userId; ?>">
-                                    <div class="form-field">
-                                        <label>Username</label>
-                                        <input type="text" name="username" required value="<?= htmlspecialchars($user['username']); ?>">
+                            <div class="card-body compact" id="<?= $bodyId; ?>">
+                                <div class="user-summary">
+                                    <div class="summary-left">
+                                        <strong><?= htmlspecialchars($user['username']); ?></strong>
+                                        <div class="muted">ID: <?= $userId; ?></div>
                                     </div>
-                                    <div class="form-field">
-                                        <label>Password lama <span>(wajib saat mengganti)</span></label>
-                                        <input type="password" name="old_password" minlength="6" placeholder="Masukkan password sekarang">
-                                    </div>
-                                    <div class="form-field">
-                                        <label>Password baru <span>(opsional)</span></label>
-                                        <input type="password" name="password" minlength="6" placeholder="Biarkan kosong jika tidak diganti">
-                                    </div>
-
-                                    <div class="form-actions">
-                                        <button type="submit" class="btn btn-primary">
-                                            <span>Simpan</span>
-                                        </button>
-                                        <button type="button" class="btn btn-danger" data-action="delete" data-no-id="<?= $userId; ?>">
-                                            <i class="fa-solid fa-trash"></i> Hapus
+                                    <div class="summary-actions">
+                                        <button class="btn btn-secondary" data-action="edit" data-user-id="<?= $userId; ?>">Edit</button>
+                                        <button class="btn btn-danger" data-action="delete" data-no-id="<?= $userId; ?>">
+                                            <i class="fa-solid fa-trash"></i>
                                         </button>
                                     </div>
-                                </form>
+                                </div>
                             </div>
                         <?php endif; ?>
                     </article>
