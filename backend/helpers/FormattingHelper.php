@@ -136,18 +136,12 @@ function numberToWords($number) {
 
 /**
  * Format jumlah lampiran (number of attachments) to Indonesian text
+ * Returns only the number word (e.g., "Dua", "Tiga")
  * 
  * @param int $count Number of attachments
- * @return string Formatted text (e.g., "Tiga butir lampiran")
+ * @return string Number in Indonesian word form (e.g., "Dua", "Tiga")
  */
 function formatJumlahLampiran($count) {
-    $text = numberToWords($count);
-    $text = ucfirst($text);
-    
-    if ($count === 1) {
-        return "{$text} lampiran";
-    }
-    
-    return "{$text} butir lampiran";
+    return ucfirst(numberToWords($count));
 }
 ?>
