@@ -1,53 +1,45 @@
-# Temporary files
+# Environment & Config
+.env
+.env.local
+.env.production
+config/database.php
+
+# Temporary & Cache
+temp/
+tmp/
+cache/
+logs/
+*.log
 *.tmp
 *.temp
-test_*.doc
-test_*.docx
-surat_*_test.*
-/backend/temp/*.doc
-/backend/temp/*.docx
 
-# System files
-.DS_Store
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-*.~*
+# Generated Files
+vendor/
+node_modules/
+*.docx
+*.pdf
+uploads/
+storage/
 
-# IDE files
+# IDE & OS
 .vscode/
 .idea/
+.DS_Store
+Thumbs.db
 *.swp
 *.swo
-*.iml
 
-# Logs
-*.log
-error.log
-access.log
-
-# Backup files
+# Backup & Debug
 *.bak
 *.backup
+debug/
+test_data/
+*.sql
 
-# Cache
-cache/
-*.cache
+# Composer
+composer.phar
 
-# Composer dependencies
-/backend/vendor/
-
-# Environment files
-.env
-*.env
-
-# PHPUnit / testing
-phpunit.xml
-phpunit.xml.dist
-
-# Optional: frontend package folder
-/node_modules/
-
-# Optional: local database files
-*.db
-*.sqlite
+# NPM
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
