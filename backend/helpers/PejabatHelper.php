@@ -1,8 +1,9 @@
 <?php
 /**
- * Pejabat (Official) Helper Functions
+ * Pejabat (Official) Helper Functions - Database Queries
  * 
  * Query and format pejabat data from database
+ * NOTE: Use these functions for database queries. For legacy hardcoded data, use utils.php
  */
 
 /**
@@ -11,7 +12,7 @@
  * @param PDO $db Database connection
  * @return array List of pejabat
  */
-function getPejabatList($db) {
+function getPejabatListFromDb($db) {
     try {
         $query = "SELECT id, nama, jabatan, nip FROM pegawai WHERE jabatan != '' ORDER BY nama ASC";
         $stmt  = $db->prepare($query);
@@ -24,13 +25,13 @@ function getPejabatList($db) {
 }
 
 /**
- * Get pejabat by specific jabatan (position)
+ * Get pejabat by specific jabatan (position) from database
  * 
  * @param PDO $db Database connection
  * @param string $jabatan Jabatan to search for
  * @return array|null Pejabat data or null
  */
-function getPejabatByJabatan($db, $jabatan) {
+function getPejabatByJabatanDb($db, $jabatan) {
     try {
         $query = "SELECT id, nama, jabatan, nip FROM pegawai WHERE jabatan = ? LIMIT 1";
         $stmt  = $db->prepare($query);
@@ -43,13 +44,13 @@ function getPejabatByJabatan($db, $jabatan) {
 }
 
 /**
- * Get all pejabat grouped by jabatan
+ * Get all pejabat grouped by jabatan from database
  * 
  * @param PDO $db Database connection
  * @return array Pejabat grouped by jabatan
  */
-function getPejabatGroupedByJabatan($db) {
-    $pejabat = getPejabatList($db);
+function getPejabatGroupedByJabatanDb($db) {
+    $pejabat = getPejabatListFromDb($db);
     $grouped = [];
 
     foreach ($pejabat as $person) {
