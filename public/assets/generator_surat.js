@@ -100,6 +100,8 @@ $(document).ready(function() {
         }
         
         updateSelectedCount();
+        // Update page count setiap kali pegawai dipilih/dihapus
+        setTimeout(() => updateJumlahHalaman(), 200);
     });
     
     // Search functionality
@@ -217,6 +219,8 @@ $(document).ready(function() {
         
         updateSelectedCount();
         showSuccessMessage('ℹ ' + emp.name + ' dihapus dari daftar');
+        // Update page count setiap kali pegawai dihapus dari selected list
+        setTimeout(() => updateJumlahHalaman(), 200);
     });
 
     // Add external participant
@@ -258,6 +262,8 @@ $(document).ready(function() {
             
             updateSelectedCount();
             showSuccessMessage('✓ Pegawai eksternal berhasil ditambahkan');
+            // Update page count setiap kali pegawai eksternal ditambahkan
+            setTimeout(() => updateJumlahHalaman(), 200);
             
             const btn = $(this);
             btn.html('✓ Ditambahkan').addClass('btn-success').removeClass('btn-secondary');
@@ -304,6 +310,44 @@ $(document).ready(function() {
         } else {
             generateTugasPreview();
         }
+        
+        // Update jumlah halaman setelah preview di-generate
+        updateJumlahHalaman();
+    }
+
+    // Fungsi untuk hitung jumlah halaman dari preview content (height-based saja)
+    function updateJumlahHalaman() {
+        const previewElement = $('#previewContent');
+        if (previewElement.length === 0) {
+            console.warn('❌ Preview element tidak ditemukan');
+            return;
+        }
+        
+        const contentHeight = previewElement.outerHeight(true);
+        if (!contentHeight) {
+            console.warn('⚠️  Preview height = 0, coba lagi nanti');
+            setTimeout(() => updateJumlahHalaman(), 100);
+            return;
+        }
+        
+        // Gunakan preview height langsung - paling akurat karena sudah mencerminkan actual rendering
+        // 698px ≈ 2 halaman, jadi divisor optimal = 698/2 = 349px
+        // Gunakan 360px untuk balance antara 2 dan 3 halaman
+        const pageHeight = 360; // pixel per halaman dalam preview
+        
+        const estimatedPages = Math.max(1, Math.ceil(contentHeight / pageHeight));
+        
+        // Set nilai ke hidden input
+        $('#jumlah_halaman').val(estimatedPages);
+        
+        // Debug log
+        console.log('%c=== DEBUG updateJumlahHalaman ===', 'color: green; font-weight: bold;');
+        console.log('Preview height:', contentHeight, 'px');
+        console.log('Page divisor:', pageHeight, 'px/halaman');
+        console.log('Calculation:', contentHeight + 'px ÷ ' + pageHeight + 'px =', (contentHeight/pageHeight).toFixed(2));
+        console.log('✅ Estimated pages:', estimatedPages);
+        console.log('Hidden input #jumlah_halaman:', $('#jumlah_halaman').val());
+        console.log('%c================', 'color: green; font-weight: bold;');
     }
 
     // Generate Surat Tugas Preview
@@ -313,9 +357,9 @@ $(document).ready(function() {
         const tglSelesai = $('#tgl_selesai').val();
         const lokasi = $('#lokasi_tugas').val() || '[Lokasi belum diisi]';
         const dipa = $('#dipa').val() || 'SP DIPA-139.05.1.693321/2025 tanggal 2 Desember 2024';
-        const jabatanPejabat = $('#jabatan_pejabat option:selected').text() || '[Jabatan belum dipilih]';
-        const namaPejabat = $('#nama_pejabat option:selected').text() || '[Pejabat belum dipilih]';
-        const nipPejabat = $('#nama_pejabat').val() || '';
+        const jabatanPejabat = $('#jabatan_pejabat').val() || '[Jabatan belum dipilih]';
+        const namaPejabat = $('#nama_pejabat').val() || '[Pejabat belum dipilih]';
+        const nipPejabat = $('#nip_pejabat').val() || '';
         const tembusan = $('#tembusan').val();
         
         // Format tanggal
@@ -520,9 +564,9 @@ $(document).ready(function() {
         const noNarahubung = $('#no_narahubung').val() || '';
         const gender = $('#gender').val() || 'Saudara';
         const tembusan = $('#tembusan').val();
-        const nipPejabat = $('#nama_pejabat').val() || '';
-        const namaPejabat = nipPejabat ? $('#nama_pejabat option:selected').text() : '[Pejabat belum dipilih]';
-        const jabatanPejabat = $('#jabatan_pejabat option:selected').text() || '[Jabatan belum dipilih]';
+        const nipPejabat = $('#nip_pejabat').val() || '';
+        const namaPejabat = $('#nama_pejabat').val() || '[Pejabat belum dipilih]';
+        const jabatanPejabat = $('#jabatan_pejabat').val() || '[Jabatan belum dipilih]';
 
         // Format tanggal Indonesia
         let tanggalFormatted = '[Tanggal belum diisi]';
@@ -900,10 +944,14 @@ $(document).ready(function() {
         }
         
         // Debug: log form data
+        console.log('%c=== FORM SUBMIT DEBUG ===', 'color: blue; font-weight: bold;');
         console.log('Form action:', $(this).attr('action'));
+        console.log('Jenis surat:', $('#jenis_surat').val());
+        console.log('Jumlah halaman (hidden input):', $('#jumlah_halaman').val());
+        console.log('Jumlah pegawai:', (($('#pegawai').val() || []).length));
         console.log('Selected employees order:', selectedEmployees.map(e => e.nip));
         console.log('Form pegawai field:', $('#pegawai').val());
-        console.log('Form data:', $(this).serialize());
+        console.log('%c=======================', 'color: blue; font-weight: bold;');
         
         const submitter = e.originalEvent.submitter;
         if (submitter && submitter.name === 'action' && submitter.value === 'export_word') {
@@ -922,6 +970,46 @@ $(document).ready(function() {
         $('#tgl_selesai').attr('min', tglMulai);
     });
 
+    // Handle perubahan jabatan pejabat - auto fill nama dan NIP
+    $('#jabatan_pejabat').on('change', function() {
+        const selectedJabatan = $(this).val();
+        
+        console.log('Jabatan dipilih:', selectedJabatan);
+        console.log('Data pejabat tersedia:', window.pejabatData);
+        
+        if (!selectedJabatan) {
+            // Reset jika tidak ada yang dipilih
+            $('#nama_pejabat').val('');
+            $('#nip_pejabat').val('');
+            return;
+        }
+
+        // Cari pejabat dengan jabatan yang dipilih
+        const pejabat = window.pejabatData.find(p => {
+            console.log('Membandingkan:', p.jabatan, '===', selectedJabatan, '?', p.jabatan === selectedJabatan);
+            return p.jabatan === selectedJabatan;
+        });
+        
+        console.log('Pejabat ditemukan:', pejabat);
+        
+        if (pejabat) {
+            // Auto-fill hidden fields dengan data pejabat
+            $('#nama_pejabat').val(pejabat.nama);
+            $('#nip_pejabat').val(pejabat.nip);
+            
+            showSuccessMessage('✓ Data pejabat ' + pejabat.nama + ' sudah terisi otomatis');
+            console.log('Hidden fields diisi:', $('#nama_pejabat').val(), $('#nip_pejabat').val());
+        } else {
+            // Pejabat tidak ditemukan
+            $('#nama_pejabat').val('');
+            $('#nip_pejabat').val('');
+            console.warn('Pejabat dengan jabatan "' + selectedJabatan + '" tidak ditemukan');
+        }
+        
+        // Trigger preview update
+        generatePreview();
+    });
+
     // Add smooth animations on load
     $('.form-group').each(function(index) {
         $(this).css({
@@ -938,8 +1026,21 @@ $(document).ready(function() {
         }, index * 100);
     });
 
+    // Initialize jabatan pejabat dengan nilai default jika ada
+    function initPejabatField() {
+        const jabatanValue = $('#jabatan_pejabat').val();
+        console.log('initPejabatField - jabatan value:', jabatanValue);
+        
+        if (jabatanValue && jabatanValue.trim() !== '') {
+            // Trigger change event untuk mengisi hidden fields
+            console.log('Memicu change event untuk jabatan:', jabatanValue);
+            $('#jabatan_pejabat').trigger('change');
+        }
+    }
+
     // Initialize
     updateFormAction();
+    initPejabatField();
     setTimeout(() => {
         generatePreview();
         showUpdateIndicator();

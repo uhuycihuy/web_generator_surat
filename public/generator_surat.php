@@ -21,7 +21,7 @@ try {
     // Get data from database
     $result = $pegawaiModel->getAll();
     $daftarPegawai = $result->fetchAll(PDO::FETCH_ASSOC);
-    $pejabatList = getNamaPejabatList();
+    $pejabatList = getPejabatList();
     
     $databaseStatus = 'connected';
     $statusMessage = 'Database terhubung successfully. Data pegawai diambil dari database.';
@@ -59,12 +59,14 @@ try {
     // Data pejabat dummy sebagai fallback
     $pejabatList = [
         [
-            'nip'   => '197901142003121001',
-            'nama'  => 'M. Samsuri'
+            'nip'      => '197901142003121001',
+            'nama'     => 'M Samsuri',
+            'jabatan'  => 'Sekretaris'
         ],
         [
-            'nip'   => '197604272005021001',
-            'nama'  => 'Ahmad Najib Burhani'
+            'nip'      => '197604272005021001',
+            'nama'     => 'Ahmad Najib Burhani',
+            'jabatan'  => 'Direktur Jenderal Sains dan Teknologi'
         ]
     ];
 }
@@ -115,6 +117,7 @@ try {
             data-action-undangan="<?= baseUrl('export_surat_undangan.php') ?>">
                 <input type="hidden" name="jenis_surat" id="jenis_surat" value="tugas">
                 <input type="hidden" name="jenis_undangan" id="jenis_undangan" value="offline">
+                <input type="hidden" name="jumlah_halaman" id="jumlah_halaman" value="1">
 
                 <div class="form-group">
                     <label class="form-label required" id="label-acara">Kegiatan/Acara</label>
@@ -266,7 +269,7 @@ try {
                     
                     <div style="margin-top: 10px;">
                         <input type="checkbox" id="tambah_pegawai_luar" style="margin-right: 8px;">
-                        <label for="tambah_pegawai_luar" style="font-size: 14px; color: #374151;">Tambah pegawai eksternal</label>
+                        <label for="tambah_pegawai_luar" style="font-size: 14px; color: #374151;">Tambah Non-pegawai</label>
                     </div>
                     
                     <div class="pegawai-luar-form" id="pegawai_luar_form">
@@ -297,7 +300,10 @@ try {
                     <label class="form-label required">Jabatan Pejabat</label>
                     <select id="jabatan_pejabat" name="jabatan_pejabat" class="form-select" required>
                         <option value="">Pilih Jabatan</option>
-                        <?php foreach (getPejabatJabatanList() as $jabatan): ?>
+                        <?php 
+                        // Get list of unique jabatan from getPejabatList()
+                        $jabatanList = array_unique(array_column($pejabatList, 'jabatan'));
+                        foreach ($jabatanList as $jabatan): ?>
                             <option value="<?= htmlspecialchars($jabatan) ?>">
                                 <?= htmlspecialchars($jabatan) ?>
                             </option>
@@ -305,17 +311,14 @@ try {
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label required">Nama Pejabat</label>
-                    <select id="nama_pejabat" name="nama_pejabat" class="form-select" required>
-                        <option value="">Pilih Nama Pejabat</option>
-                        <?php foreach ($pejabatList as $pejabat): ?>
-                            <option value="<?= htmlspecialchars($pejabat['nip']) ?>">
-                                <?= htmlspecialchars($pejabat['nama']) ?>
-                            </option>
-                        <?php endforeach; ?> 
-                    </select>
-                </div>
+                <!-- Hidden input untuk menyimpan data pejabat yang dipilih -->
+                <input type="hidden" id="nama_pejabat" name="nama_pejabat" value="">
+                <input type="hidden" id="nip_pejabat" name="nip_pejabat" value="">
+
+                <!-- Data pejabat untuk JavaScript (digunakan untuk auto-fill) -->
+                <script>
+                    window.pejabatData = <?= json_encode($pejabatList) ?>;
+                </script>
 
                 <div class="form-group">
                     <label class="form-label">Tembusan (Opsional)</label>

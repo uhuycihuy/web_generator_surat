@@ -87,25 +87,61 @@ function formatWaktuUndangan($waktuAwal, $waktuAkhir = '') {
     return $waktuAkhir;
 }
 
-//Data dropdown Pejabat Pendatanganan
-function getPejabatJabatanList() {
+//Data Pejabat Pendatanganan - Unified Function
+function getPejabatList() {
     return [
-        "Sekretaris",
-        "Direktur Jenderal Sains dan Teknologi"
+        [
+            'nip'      => '197901142003121001',
+            'nama'     => 'M Samsuri',
+            'jabatan'  => 'Sekretaris'
+        ],
+        [
+            'nip'      => '197604272005021001',
+            'nama'     => 'Ahmad Najib Burhani',
+            'jabatan'  => 'Direktur Jenderal Sains dan Teknologi'
+        ]
     ];
 }
 
+//Data dropdown Pejabat Jabatan (Legacy - gunakan getPejabatList() untuk fitur baru)
+function getPejabatJabatanList() {
+    $pejabatList = getPejabatList();
+    return array_column($pejabatList, 'jabatan');
+}
+
+//Data dropdown Pejabat Nama (Legacy - gunakan getPejabatList() untuk fitur baru)
 function getNamaPejabatList() {
-    return [
-        [
-            'nip'   => '197901142003121001',
-            'nama'  => 'M Samsuri'
-        ],
-        [
-            'nip'   => '197604272005021001',
-            'nama'  => 'Ahmad Najib Burhani'
-        ]
-    ];
+    return getPejabatList();
+}
+
+/**
+ * Get pejabat data by jabatan (new function)
+ * 
+ * @param string $jabatan - Jabatan pejabat
+ * @return array|null - Return array with nip, nama, jabatan or null if not found
+ */
+function getPejabatByJabatan($jabatan) {
+    $pejabatList = getPejabatList();
+    foreach ($pejabatList as $pejabat) {
+        if ($pejabat['jabatan'] === $jabatan) {
+            return $pejabat;
+        }
+    }
+    return null;
+}
+
+/**
+ * Get all pejabat grouped by jabatan
+ * 
+ * @return array - Return array with jabatan as key and pejabat data as value
+ */
+function getPejabatGroupedByJabatan() {
+    $pejabatList = getPejabatList();
+    $grouped = [];
+    foreach ($pejabatList as $pejabat) {
+        $grouped[$pejabat['jabatan']] = $pejabat;
+    }
+    return $grouped;
 }
 
 // Cek apakah user sudah login
@@ -196,5 +232,64 @@ function checkAdmin() {
 // Ambil data user yang login
 function currentUser() {
     return $_SESSION['user'] ?? null;
+}
+
+/**
+ * Convert angka ke format kata dalam bahasa Indonesia
+ * 
+ * @param int $number - Angka yang akan dikonversi
+ * @return string - Representasi kata dari angka (contoh: "satu", "dua", dst)
+ */
+function numberToWords($number) {
+    $number = (int)$number;
+    
+    $ones = ['', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan'];
+    $teens = ['sepuluh', 'sebelas', 'dua belas', 'tiga belas', 'empat belas', 'lima belas', 
+              'enam belas', 'tujuh belas', 'delapan belas', 'sembilan belas'];
+    $tens = ['', '', 'dua puluh', 'tiga puluh', 'empat puluh', 'lima puluh', 'enam puluh', 
+             'tujuh puluh', 'delapan puluh', 'sembilan puluh'];
+    
+    if ($number == 0) {
+        return 'nol';
+    }
+    
+    if ($number < 10) {
+        return $ones[$number];
+    } elseif ($number < 20) {
+        return $teens[$number - 10];
+    } elseif ($number < 100) {
+        $ten = (int)($number / 10);
+        $one = $number % 10;
+        if ($one == 0) {
+            return $tens[$ten];
+        } else {
+            return $tens[$ten] . ' ' . $ones[$one];
+        }
+    } elseif ($number < 1000) {
+        $hundred = (int)($number / 100);
+        $rest = $number % 100;
+        $result = 'seratus';
+        if ($hundred > 1) {
+            $result = $ones[$hundred] . ' ratus';
+        }
+        if ($rest > 0) {
+            $result .= ' ' . numberToWords($rest);
+        }
+        return $result;
+    } else {
+        return (string)$number; // Fallback untuk angka besar
+    }
+}
+
+/**
+ * Format jumlah lampiran ke dalam kata-kata
+ * 
+ * @param int $jumlah - Jumlah halaman/lampiran
+ * @return string - Format "satu lembar", "dua lembar", dst
+ */
+function formatJumlahLampiran($jumlah) {
+    $jumlah = (int)$jumlah;
+    $kata = numberToWords($jumlah);
+    return $kata . ' lembar';
 }
 ?>

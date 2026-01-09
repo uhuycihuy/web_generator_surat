@@ -51,28 +51,21 @@ $totalUserCount = count($users);
                     <i class="fa-solid fa-user-shield" aria-hidden="true"></i>
                     <span class="count-number"><?= $adminCount; ?></span> admin
                 </span>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="openCreateUser" aria-label="Tambah akun baru">Tambah</button>
+                </div>
             </div>
         </section>
 
         <section class="user-flash" id="userFlash" hidden></section>
 
         <section class="user-grid" aria-label="Daftar user terdaftar">
-            <article class="user-card user-card--create" aria-labelledby="create-user-title">
-                <div class="card-header">
-                    <div>
-                        <h2 id="create-user-title">Tambah User</h2>
-                        <p class="card-subtitle">Buat akun baru dengan cepat</p>
-                    </div>
-                    <div class="card-actions">
-                        <button class="btn btn-primary" id="openCreateUser">Tambah</button>
-                    </div>
-                </div>
-            </article>
+            <!-- Create card removed; Add button moved to header-meta for a compact layout -->
 
             <?php if (empty($users)): ?>
                 <article class="user-card user-card--empty">
                     <i class="fa-solid fa-user-slash"></i>
-                    <p>Belum ada user terdaftar. Tambahkan minimal satu akun User.</p>
+                    <p>Belum ada user terdaftar. Tambahkan minimal satu akun.</p>
                 </article>
             <?php else: ?>
                 <?php foreach ($users as $user): ?>
@@ -90,11 +83,21 @@ $totalUserCount = count($users);
                                     <span class="role-chip role-<?= htmlspecialchars($user['role']); ?>">
                                         <?= $user['role'] === 'admin' ? 'Administrator' : 'User'; ?>
                                     </span>
-                                    <?php if ($isSelf): ?>
-                                        <span class="self-chip" title="Akun Anda"><i class="fa-solid fa-circle-user"></i> Anda</span>
-                                    <?php endif; ?>
+                                    <?php if ($isSelf && !$isAdmin): ?>
+                                            <span class="self-chip" title="Akun Anda"><i class="fa-solid fa-circle-user"></i> Anda</span>
+                                        <?php endif; ?>
                                 </div>
                             </div>
+                            <?php if (!$isAdmin): ?>
+                                <div class="card-actions">
+                                    <button class="btn btn-icon btn-edit" data-action="edit" data-user-id="<?= $userId; ?>" aria-label="Edit <?= htmlspecialchars($user['username']); ?>">
+                                        <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                                    </button>
+                                    <button class="btn btn-icon btn-delete" data-action="delete" data-no-id="<?= $userId; ?>" aria-label="Hapus <?= htmlspecialchars($user['username']); ?>">
+                                        <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            <?php endif; ?>
                         </header>
 
                         <?php if ($isAdmin): ?>
@@ -105,18 +108,11 @@ $totalUserCount = count($users);
                                 </p>
                                
                             </div>
-                        <?php else: ?>
+                            <?php else: ?>
                             <div class="card-body compact" id="<?= $bodyId; ?>">
                                 <div class="user-summary">
                                     <div class="summary-left">
-                                        <strong><?= htmlspecialchars($user['username']); ?></strong>
-                                        <div class="muted">ID: <?= $userId; ?></div>
-                                    </div>
-                                    <div class="summary-actions">
-                                        <button class="btn btn-secondary" data-action="edit" data-user-id="<?= $userId; ?>">Edit</button>
-                                        <button class="btn btn-danger" data-action="delete" data-no-id="<?= $userId; ?>">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
+                                        <!-- username is displayed in the header -->
                                     </div>
                                 </div>
                             </div>

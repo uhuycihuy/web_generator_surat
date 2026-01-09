@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tpl.innerHTML = `
             <div class="user-modal" role="dialog" aria-modal="true" hidden>
                 <div class="user-modal-backdrop"></div>
-                <div class="user-modal-panel">
+                <div class="user-modal-panel" tabindex="-1">
                     <header class="modal-header">
                         <h3 class="modal-title">Modal</h3>
                         <button class="modal-close btn btn-secondary">×</button>
@@ -105,11 +105,15 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <label>Username</label>
                                 <input type="text" name="username" required autocomplete="off">
                             </div>
-                            <div class="form-field">
+                            <div class="form-field create-only">
+                                <label>Password <span>(minimal 6 karakter)</span></label>
+                                <input type="password" name="password" minlength="6" placeholder="Masukkan password">
+                            </div>
+                            <div class="form-field edit-only" style="display:none;">
                                 <label>Password lama <span>(wajib saat mengganti)</span></label>
                                 <input type="password" name="old_password" minlength="6" placeholder="Masukkan password sekarang jika ingin ganti">
                             </div>
-                            <div class="form-field">
+                            <div class="form-field edit-only" style="display:none;">
                                 <label>Password baru <span>(opsional)</span></label>
                                 <input type="password" name="password" minlength="6" placeholder="Biarkan kosong jika tidak diganti">
                             </div>
@@ -145,7 +149,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const formEl = ev.target;
                 const noId = formEl.querySelector('input[name="no_id"]').value;
                 const action = noId ? 'update' : 'create';
-                submitForm(formEl, action).then(() => closeModal());
+                (async () => {
+                    const ok = await submitForm(formEl, action);
+                    if (ok) closeModal();
+                })();
             });
 
             // keyboard accessibility: close on ESC
@@ -165,6 +172,19 @@ document.addEventListener('DOMContentLoaded', () => {
         form.reset();
         form.querySelector('input[name="no_id"]').value = '';
         form.querySelector('input[name="role"]').value = 'user';
+        // ensure create-only password visible and required; hide and disable edit-only fields
+        const createFields = Array.from(form.querySelectorAll('.create-only'));
+        const editFields = Array.from(form.querySelectorAll('.edit-only'));
+        createFields.forEach((el) => {
+            el.style.display = '';
+            const input = el.querySelector('input');
+            if (input) { input.required = true; input.disabled = false; }
+        });
+        editFields.forEach((el) => {
+            el.style.display = 'none';
+            const inputs = el.querySelectorAll('input');
+            inputs.forEach((inp) => { inp.required = false; inp.value = ''; inp.disabled = true; });
+        });
         m.hidden = false;
         document.documentElement.classList.add('modal-open');
         requestAnimationFrame(() => {
@@ -185,7 +205,19 @@ document.addEventListener('DOMContentLoaded', () => {
         form.querySelector('input[name="no_id"]').value = userId;
         form.querySelector('input[name="username"]').value = username;
         form.querySelector('input[name="role"]').value = card.dataset.role || 'user';
-        form.querySelector('input[name="password"]').value = '';
+        // show edit-only fields and hide/disable create-only password
+        const createFields = Array.from(form.querySelectorAll('.create-only'));
+        const editFields = Array.from(form.querySelectorAll('.edit-only'));
+        createFields.forEach((el) => {
+            el.style.display = 'none';
+            const input = el.querySelector('input[name="password"]');
+            if (input) { input.required = false; input.value = ''; input.disabled = true; }
+        });
+        editFields.forEach((el) => {
+            el.style.display = '';
+            const inputs = el.querySelectorAll('input');
+            inputs.forEach((inp) => { inp.disabled = false; });
+        });
         m.hidden = false;
         requestAnimationFrame(() => m.classList.add('open'));
     }
@@ -222,18 +254,25 @@ document.addEventListener('DOMContentLoaded', () => {
             `.trim();
             const node = tpl.content.firstElementChild;
             document.body.appendChild(node);
+            // lock background while confirm open
+            document.documentElement.classList.add('modal-open');
+            // show panel animation (match ensureModal behaviour)
+            node.classList.add('open');
             const backdrop = node.querySelector('.user-modal-backdrop');
             const ok = node.querySelector('.confirm-ok');
             const cancel = node.querySelector('.confirm-cancel');
 
             function cleanup(result) {
                 node.remove();
+                document.documentElement.classList.remove('modal-open');
                 resolve(result);
             }
 
             ok.addEventListener('click', () => cleanup(true));
             cancel.addEventListener('click', () => cleanup(false));
             backdrop.addEventListener('click', () => cleanup(false));
+            // autofocus cancel for easier keyboard dismiss
+            if (cancel) cancel.focus();
         });
     }
 
@@ -248,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const headerMeta = `
             <div class="card-meta">
                 <span class="role-chip ${roleClass}">${escapeHTML(roleLabel)}</span>
-                ${isSelf ? '<span class="self-chip" title="Akun Anda"><i class="fa-solid fa-circle-user"></i> Anda</span>' : ''}
+                ${isSelf && !isAdmin ? '<span class="self-chip" title="Akun Anda"><i class="fa-solid fa-circle-user"></i> Anda</span>' : ''}
             </div>
         `;
 
@@ -263,30 +302,23 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         const userBody = `
-            <div class="card-body" id="${bodyId}">
-                <form class="user-form" data-action="update">
-                    <input type="hidden" name="no_id" value="${escapeHTML(user.no_id)}">
-                    <div class="form-field">
-                        <label>Username</label>
-                        <input type="text" name="username" required value="${escapeHTML(user.username)}">
+            <div class="card-body compact" id="${bodyId}">
+                <div class="user-summary">
+                    <div class="summary-left">
+                        <!-- username shown in header -->
                     </div>
-                    <div class="form-field">
-                        <label>Password lama <span>(wajib saat mengganti)</span></label>
-                        <input type="password" name="old_password" minlength="6" placeholder="Masukkan password sekarang">
-                    </div>
-                    <div class="form-field">
-                        <label>Password baru <span>(opsional)</span></label>
-                        <input type="password" name="password" minlength="6" placeholder="Biarkan kosong jika tidak diganti">
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">
-                            <span>Simpan</span>
-                        </button>
-                        <button type="button" class="btn btn-danger" data-action="delete" data-no-id="${escapeHTML(user.no_id)}">
-                            <i class="fa-solid fa-trash"></i> Hapus
-                        </button>
-                    </div>
-                </form>
+                </div>
+            </div>
+        `;
+
+        const actionsHtml = isAdmin ? '' : `
+            <div class="card-actions">
+                <button class="btn btn-icon btn-edit" data-action="edit" data-user-id="${escapeHTML(user.no_id)}" aria-label="Edit ${escapeHTML(user.username)}">
+                    <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                </button>
+                <button class="btn btn-icon btn-delete" data-action="delete" data-no-id="${escapeHTML(user.no_id)}" aria-label="Hapus ${escapeHTML(user.username)}">
+                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                </button>
             </div>
         `;
 
@@ -297,6 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <h2>${escapeHTML(user.username)}</h2>
                         ${headerMeta}
                     </div>
+                    ${actionsHtml}
                 </header>
                 ${isAdmin ? adminBody : userBody}
             </article>
@@ -403,9 +436,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(endpoint, {
                 method: 'POST',
                 body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
             });
 
             const data = await parseResponse(response);
@@ -427,9 +461,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             showFlash(data.message || 'Berhasil disimpan');
             hideFlash(2600);
+            return true;
         } catch (error) {
             showFlash(error.message || 'Terjadi kesalahan', 'error');
             hideFlash(3200);
+            return false;
         } finally {
             if (submitBtn) {
                 submitBtn.disabled = false;
@@ -452,7 +488,10 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('no_id', noId);
         formData.append('entity', 'user');
 
-        button.disabled = true;
+    // show spinner state
+    const originalBtnHtml = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span>';
 
         try {
             const response = await fetch(endpoint, {
@@ -460,7 +499,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: formData,
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
-                }
+                },
+                credentials: 'same-origin'
             });
 
             const data = await parseResponse(response);
@@ -470,7 +510,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const deletedId = data.data?.deleted_id ?? noId;
-            deleteUserCard(deletedId);
+            // animate removal for UX
+            const sel = `.user-card[data-user-id="${escapeSelector(deletedId)}"]`;
+            const cardToRemove = userGrid.querySelector(sel);
+            if (cardToRemove) {
+                cardToRemove.classList.add('user-card--removing');
+                setTimeout(() => deleteUserCard(deletedId), 260);
+            } else {
+                deleteUserCard(deletedId);
+            }
 
             showFlash(data.message || 'User dihapus');
             hideFlash(2600);
@@ -478,7 +526,9 @@ document.addEventListener('DOMContentLoaded', () => {
             showFlash(error.message || 'Terjadi kesalahan', 'error');
             hideFlash(3200);
         } finally {
+            // restore button
             button.disabled = false;
+            if (button) button.innerHTML = originalBtnHtml;
         }
     }
 

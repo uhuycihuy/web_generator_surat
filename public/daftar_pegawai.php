@@ -43,7 +43,7 @@ if ($role === 'admin') {
             <div class="title-group">
                 <i class="fa-solid fa-users icon-title"></i>
                 <div>
-                    <h1 class="page-title">Daftar Pegawai Kemendikti Saintek</h1>
+                    <h1 class="page-title">Daftar Pegawai Dirjen Saintek</h1>
                     <p class="page-subtitle">Halaman mencari pegawai Kemendikti Saintek</p>
                 </div>
             </div>
@@ -69,6 +69,7 @@ if ($role === 'admin') {
             <table class="pegawai-table">
                 <thead>
                     <tr>
+                        <th>No.</th>
                         <th>Nama Pegawai</th>
                         <th>NIP</th>
                         <th>Pangkat</th>
@@ -85,8 +86,9 @@ if ($role === 'admin') {
                             </td>
                         </tr>
                     <?php else: ?>
-                        <?php foreach ($pegawaiList as $pegawai): ?>
-                            <tr class="pegawai-row">
+                       <?php $index = 0; foreach ($pegawaiList as $pegawai): $index++; ?>
+                            <tr class="pegawai-row" data-index="<?= $index - 1 ?>">
+                                <td class="row-number">-</td>
                                 <td><?= htmlspecialchars($pegawai['nama_pegawai']) ?></td>
                                 <td><?= htmlspecialchars($pegawai['nip']) ?></td>
                                 <td><?= htmlspecialchars($pegawai['pangkat']) ?></td>
@@ -236,7 +238,15 @@ if ($role === 'admin') {
             
             // Show only rows for current page
             const rowsToShow = filteredRows.slice(start, end);
-            rowsToShow.forEach(row => row.style.display = '');
+            rowsToShow.forEach((row, index) => {
+                row.style.display = '';
+                // Update nomor urut berdasarkan posisi global di filteredRows
+                const globalIndex = start + index + 1;
+                const rowNumberCell = row.querySelector('.row-number');
+                if (rowNumberCell) {
+                    rowNumberCell.textContent = globalIndex ;
+                }
+            });
             
             // Update pagination info
             updatePaginationInfo(start, end);

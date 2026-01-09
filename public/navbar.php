@@ -12,7 +12,7 @@ $username = $_SESSION['user']['username'] ?? "Guest";
 <header class="header generator-surat">
     <div class="header-left">
         <div class="logo"></div>
-        <div class="header-title">Kementerian Pendidikan Tinggi, Sains, dan Teknologi</div>
+        <div class="header-title">Direktorat Jenderal Sains dan Teknologi</div>
     </div>
 
     <div class="header-buttons">

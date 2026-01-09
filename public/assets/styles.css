@@ -409,6 +409,115 @@ body {
     gap: 8px;
 }
 
+/* Kelola user card action styles */
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+}
+
+/* ensure action buttons stick to the right */
+.card-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.card-actions .btn {
+    padding: 6px 10px;
+    font-size: 13px;
+    border-radius: 6px;
+}
+
+.card-actions .btn.btn-danger {
+    background: #ef4444;
+    color: white;
+    border: none;
+}
+
+.user-card--removing {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.995);
+    transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+/* Compact card visual improvements */
+.user-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 0; /* header provides the spacing */
+    overflow: hidden;
+    min-height: 64px;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.user-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(2,6,23,0.06);
+}
+
+/* Hide regular card body for compact layout; admin keep a static note */
+.user-card .card-body.compact {
+    display: none;
+}
+
+.user-card--admin .card-body--static {
+    display: block;
+    padding: 12px 16px;
+    background: linear-gradient(180deg, rgba(15,23,42,0.02), transparent);
+    color: #374151;
+    font-size: 13px;
+}
+
+/* Title and role chip styling */
+.card-header h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0;
+}
+
+.role-chip {
+    font-size: 0.72rem;
+    padding: 4px 8px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-left: 8px;
+}
+
+.role-user { background: #eef2ff; color: var(--brand-blue-dark); border: 1px solid #e0e7ff; }
+.role-admin { background: #fff1f2; color: #9f1239; border: 1px solid #fee2e2; }
+
+/* Icon-only action spacing and focus */
+.btn-icon { width: 38px; height: 38px; }
+.btn-icon:focus { box-shadow: 0 0 0 3px rgba(37,99,235,0.12); outline: none; }
+
+/* Modal open - lock scroll */
+.modal-open {
+    overflow: hidden;
+}
+
+/* tiny spinner used in action buttons */
+.btn-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    box-shadow: 0 -6px 0 var(--color-surface) inset;
+    background: linear-gradient(90deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.15) 100%);
+    animation: btn-spin 0.9s linear infinite;
+}
+
+@keyframes btn-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 .btn-primary.surat-tugas {
     background: linear-gradient(135deg, var(--brand-blue), var(--brand-blue-dark));
     color: white;
@@ -1833,12 +1942,12 @@ html:not(.js-loaded) body {
 }
 
 .btn-primary {
-    background: #2196F3;
+    background: var(--brand-blue);
     color: white;
 }
 
 .btn-primary:hover {
-    background: #1976D2;
+    background: var(--brand-blue-dark);
     transform: translateY(-1px);
 }
 
@@ -2166,7 +2275,7 @@ body.admin-layout .main-content {
 
 .card-header i {
     font-size: 1.6rem;
-    color: #1d4ed8;
+    color: var(--brand-blue-dark);
 }
 
 .card-body {
@@ -2187,7 +2296,7 @@ body.admin-layout .main-content {
     align-items: center;
     gap: 10px;
     font-weight: 600;
-    color: #1d4ed8;
+    color: var(--brand-blue-dark);
 }
 
 .admin-note__hint {
@@ -2198,7 +2307,7 @@ body.admin-layout .main-content {
 
 .user-card--admin {
     background: linear-gradient(135deg, rgba(248, 250, 252, 0.95), rgba(226, 232, 240, 0.55));
-    border: 1px solid rgba(59, 130, 246, 0.2);
+    border: 1px solid rgba(33, 150, 243, 0.18);
 }
 
 .user-card--highlight {
@@ -2275,6 +2384,57 @@ body.admin-layout .main-content {
     gap: 8px;
 }
 
+/* Icon-only buttons for compact header actions */
+.btn-icon {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--brand-blue-dark);
+    cursor: pointer;
+    transition: background 0.18s ease, transform 0.12s ease;
+}
+
+.btn-icon i { font-size: 14px; }
+
+.btn-icon:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(33,150,243,0.12);
+}
+
+.btn-icon:hover { background: rgba(33,150,243,0.06); }
+
+.btn-icon.btn-delete { color: #ef4444; }
+.btn-icon.btn-delete:hover { background: rgba(239,68,68,0.06); }
+/* ensure the trash icon itself is solid red and slightly darker on hover */
+.btn-icon.btn-delete i,
+.btn-delete i {
+    color: #ef4444;
+}
+.btn-icon.btn-delete:hover i,
+.btn-delete:hover i {
+    color: #c82333;
+}
+
+/* optional tooltip using data-title (CSS-only) */
+.btn-icon[data-title]:hover::after,
+.btn-icon[data-title]:focus::after {
+    content: attr(data-title);
+    position: absolute;
+    background: rgba(17,24,39,0.95);
+    color: #fff;
+    padding: 6px 8px;
+    font-size: 12px;
+    border-radius: 6px;
+    transform: translateY(-8px);
+    white-space: nowrap;
+}
+
 .card-body.compact .user-summary {
     display: flex;
     justify-content: space-between;
@@ -2319,6 +2479,14 @@ body.admin-layout .main-content {
     min-width: 92px;
 }
 
+/* Hide any inline forms inside the user grid to force modal usage */
+.user-grid .user-form {
+    display: none !important;
+}
+
+/* Ensure modal overlays everything */
+.user-modal { z-index: 99999; }
+
 .form-field input,
 .form-field select {
     border: 1px solid var(--color-border);
@@ -2350,13 +2518,13 @@ body.admin-layout .main-content {
 }
 
 .role-chip.role-admin {
-    background: rgba(220, 38, 38, 0.12);
-    color: #b91c1c;
+    background: rgba(37, 99, 235, 0.06);
+    color: var(--brand-blue-dark);
 }
 
 .role-chip.role-user {
-    background: rgba(37, 99, 235, 0.12);
-    color: #1d4ed8;
+    background: rgba(33, 150, 243, 0.12);
+    color: var(--brand-blue-dark);
 }
 
 .self-chip {
