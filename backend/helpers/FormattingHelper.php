@@ -77,15 +77,41 @@ function formatTanggalIndonesia($date, $withDay = false) {
 
 /**
  * Format waktu (time) for undangan/invitation
+ * Handles start time and optional end time with Indonesian format
  * 
- * @param string $startTime Start time (H:i)
- * @param string $endTime End time (H:i)
- * @return string Formatted time (e.g., "09:00 - 12:00 WIB")
+ * @param string $startTime Start time (H:i or HH:mm)
+ * @param string $endTime End time (H:i or HH:mm) or "Selesai"
+ * @return string Formatted time (e.g., "09.00 WIB s.d Selesai" or "09.00 - 12.00 WIB")
  */
-function formatWaktuUndangan($startTime, $endTime) {
-    $start = date('H:i', strtotime($startTime));
-    $end   = date('H:i', strtotime($endTime));
-    return "{$start} - {$end} WIB";
+function formatWaktuUndangan($startTime, $endTime = '') {
+    if (empty($startTime)) {
+        return '';
+    }
+
+    // Convert start time to HH.mm format (with dot, Indonesian style)
+    $startTimestamp = strtotime($startTime);
+    if ($startTimestamp === false) {
+        return '';
+    }
+    
+    $startFormatted = str_replace(':', '.', date('H:i', $startTimestamp));
+
+    // Handle end time
+    if (empty($endTime) || strtolower(trim($endTime)) === 'selesai') {
+        // No end time or "Selesai" - return with s.d. Selesai
+        return "{$startFormatted} WIB s.d. Selesai";
+    }
+
+    // End time exists - format it
+    $endTimestamp = strtotime($endTime);
+    if ($endTimestamp === false) {
+        return "{$startFormatted} WIB s.d Selesai";
+    }
+    
+    $endFormatted = str_replace(':', '.', date('H:i', $endTimestamp));
+
+    // Return time range with s.d.
+    return "{$startFormatted} s.d. {$endFormatted} WIB";
 }
 
 /**

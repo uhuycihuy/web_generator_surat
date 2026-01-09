@@ -157,4 +157,15 @@ function getClientIP() {
     }
     return 'Unknown';
 }
+
+/**
+ * Sanitize/clean field value
+ * Removes empty values and placeholder dashes
+ * 
+ * @param mixed $value Value to clean
+ * @return string Cleaned value
+ */
+function cleanField($value) {
+    return (!empty($value) && $value !== '-') ? trim($value) : '';
+}
 ?>

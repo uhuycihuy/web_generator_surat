@@ -147,12 +147,36 @@ abstract class AbstractSuratController extends BaseController {
 
     /**
      * Helper: Bersihkan field value
+     * Wrapper untuk CommonHelper::cleanField()
      * 
      * @param string $value
      * @return string
      */
     protected function cleanField($value) {
-        return (!empty($value) && $value !== '-') ? trim($value) : '';
+        return cleanField($value);
+    }
+
+    /**
+     * Validate template memiliki required placeholders
+     * 
+     * @param TemplateProcessor $template Template yang akan divalidasi
+     * @param array $requiredPlaceholders List placeholder yang harus ada
+     * @return void
+     * @throws Exception Jika ada placeholder yang hilang
+     */
+    protected function validateTemplateVariables($template, $requiredPlaceholders = []) {
+        if (empty($requiredPlaceholders)) {
+            return; // Skip validation jika tidak ada requirement
+        }
+
+        $variables = $template->getVariables();
+        $missingPlaceholders = array_diff($requiredPlaceholders, $variables);
+        
+        if (!empty($missingPlaceholders)) {
+            throw new Exception(
+                'Template tidak valid. Missing placeholders: ' . implode(', ', $missingPlaceholders)
+            );
+        }
     }
 
     /**

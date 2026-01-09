@@ -177,6 +177,9 @@ $(document).ready(function() {
         const jenis = $(this).data('jenis');
         $('#jenis_undangan').val(jenis);
         
+        console.log('DEBUG: jenis_undangan set to:', jenis);
+        console.log('DEBUG: hidden field value:', $('#jenis_undangan').val());
+        
         if (jenis === 'online') {
             $('.offline-fields').hide();
             $('.online-fields').show();
@@ -584,11 +587,12 @@ $(document).ready(function() {
 
         let waktuFormatted = '[Waktu belum diisi]';
         if (waktuAwal) {
-            waktuFormatted = waktuAwal;
+            const startFormatted = waktuAwal.replace(':', '.');
             if (waktuAkhir) {
-                waktuFormatted += ' - ' + waktuAkhir + ' WIB';
+                const endFormatted = waktuAkhir.replace(':', '.');
+                waktuFormatted = startFormatted + ' s.d. ' + endFormatted + ' WIB';
             } else {
-                waktuFormatted += ' - selesai WIB';
+                waktuFormatted = startFormatted + ' WIB s.d. Selesai';
             }
         }
 

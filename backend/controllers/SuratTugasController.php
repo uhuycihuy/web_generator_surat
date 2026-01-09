@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/AbstractSuratController.php';
 require_once __DIR__ . '/../config/EnvLoader.php';
+require_once __DIR__ . '/../http/ApiResponse.php';
 
 /**
  * Surat Tugas Controller
@@ -106,7 +107,7 @@ class SuratTugasController extends AbstractSuratController {
         } catch (Exception $e) {
             error_log('SuratTugasController Error: ' . $e->getMessage());
             error_log('Stack trace: ' . $e->getTraceAsString());
-            die('Error: ' . htmlspecialchars($e->getMessage()));
+            ApiResponse::error($e->getMessage(), 400);
         }
     }
 }

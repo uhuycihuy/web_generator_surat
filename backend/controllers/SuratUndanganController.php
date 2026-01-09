@@ -3,6 +3,7 @@ session_start();
 require_once __DIR__ . '/AbstractSuratController.php';
 require_once __DIR__ . '/../helpers/link_formatter.php';
 require_once __DIR__ . '/../config/EnvLoader.php';
+require_once __DIR__ . '/../http/ApiResponse.php';
 
 /**
  * Surat Undangan Controller
@@ -39,6 +40,10 @@ class SuratUndanganController extends AbstractSuratController {
             $tembusan = $_POST['tembusan'] ?? '';
             $jabatanPejabat = $_POST['jabatan_pejabat'] ?? '';
             $jenisUndangan = $_POST['jenis_undangan'] ?? 'offline';
+            
+            // Debug log untuk troubleshooting
+            error_log('DEBUG SuratUndanganController - jenis_undangan: ' . $jenisUndangan);
+            error_log('DEBUG SuratUndanganController - POST data: ' . json_encode($_POST));
             $media = $_POST['media'] ?? '';
             $rapatId = $_POST['rapat_id'] ?? '';
             $kataSandi = $_POST['kata_sandi'] ?? '';
@@ -58,9 +63,17 @@ class SuratUndanganController extends AbstractSuratController {
             // Process pegawai (using shared method - REMOVED DUPLICATE CODE)
             $daftarPegawai = $this->processPegawaiData($selectedPegawai);
 
-            // Format dates
+            // Format dates and time
             $tanggalFormatted = formatTanggalIndonesia($tanggal);
-            $waktuFormatted = formatWaktuUndangan($waktuAwal, $waktuAkhir);
+            
+            // Format waktu - handle start and end time properly
+            if (!empty($waktuAkhir) && strtolower(trim($waktuAkhir)) !== 'selesai') {
+                // Both start and end time provided
+                $waktuFormatted = formatWaktuUndangan($waktuAwal, $waktuAkhir);
+            } else {
+                // Only start time or "selesai"
+                $waktuFormatted = formatWaktuUndangan($waktuAwal, $waktuAkhir);
+            }
 
             // Select template
             if ($jenisUndangan === 'online') {
@@ -68,28 +81,48 @@ class SuratUndanganController extends AbstractSuratController {
             } else {
                 $templatePath = 'template_surat_undangan_offline';
             }
+            
+            error_log('DEBUG SuratUndanganController - templatePath: ' . $templatePath);
+            error_log('DEBUG SuratUndanganController - jenisUndangan comparison: ' . ($jenisUndangan === 'online' ? 'TRUE' : 'FALSE'));
 
             // Load template (using shared method)
             $templateProcessor = $this->loadTemplate($templatePath);
 
             // Validate required placeholders
+            $this->validateTemplateVariables($templateProcessor, ['ACARA', 'TANGGAL', 'AGENDA', 'NAMA_PEJABAT']);
+
+            // Get template variables for conditional placeholder setting
             $variables = $templateProcessor->getVariables();
-            $requiredPlaceholders = ['ACARA', 'TANGGAL', 'AGENDA', 'NAMA_PEJABAT'];
-            $missingPlaceholders = array_diff($requiredPlaceholders, $variables);
-            
-            if (!empty($missingPlaceholders)) {
-                throw new Exception('Template tidak valid. Missing: ' . implode(', ', $missingPlaceholders));
-            }
 
             // Replace common placeholders
             $templateProcessor->setValue('ACARA', $acara);
             $templateProcessor->setValue('TANGGAL', $tanggalFormatted);
-            $templateProcessor->setValue('WAKTU_AWAL', $waktuAwal);
-
-            if (in_array('WAKTU_AKHIR', $variables)) {
-                $templateProcessor->setValue('WAKTU_AKHIR', $waktuFormatted);
-            } elseif (in_array('WKTU_AKHIR', $variables)) {
-                $templateProcessor->setValue('WKTU_AKHIR', $waktuFormatted);
+            
+            // Set time placeholders - avoid duplication
+            if (in_array('WAKTU_AWAL', $variables) && in_array('WAKTU_AKHIR', $variables)) {
+                // Template has separate start and end time placeholders
+                $startFormatted = str_replace(':', '.', date('H:i', strtotime($waktuAwal))) . ' WIB';
+                $endFormatted = !empty($waktuAkhir) && strtolower(trim($waktuAkhir)) !== 'selesai' 
+                    ? str_replace(':', '.', date('H:i', strtotime($waktuAkhir))) . ' WIB'
+                    : 'Selesai';
+                    
+                $templateProcessor->setValue('WAKTU_AWAL', $startFormatted);
+                $templateProcessor->setValue('WAKTU_AKHIR', $endFormatted);
+            } elseif (in_array('WAKTU_AWAL', $variables)) {
+                // Template only has WAKTU_AWAL placeholder - use full formatted time
+                $templateProcessor->setValue('WAKTU_AWAL', $waktuFormatted);
+                // Clear any remaining WAKTU_AKHIR placeholder
+                if (in_array('WAKTU_AKHIR', $variables)) {
+                    $templateProcessor->setValue('WAKTU_AKHIR', '');
+                }
+            } elseif (in_array('WAKTU', $variables)) {
+                // Template has generic WAKTU placeholder
+                $templateProcessor->setValue('WAKTU', $waktuFormatted);
+            }
+            
+            // Handle any remaining time-related placeholders
+            if (in_array('WKTU_AKHIR', $variables)) {
+                $templateProcessor->setValue('WKTU_AKHIR', '');
             }
 
             $templateProcessor->setValue('AGENDA', $agenda);
@@ -174,7 +207,7 @@ class SuratUndanganController extends AbstractSuratController {
         } catch (Exception $e) {
             error_log('SuratUndanganController Error: ' . $e->getMessage());
             error_log('Stack trace: ' . $e->getTraceAsString());
-            die('Error: ' . htmlspecialchars($e->getMessage()));
+            ApiResponse::error($e->getMessage(), 400);
         }
     }
 }

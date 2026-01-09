@@ -5,6 +5,9 @@
  * Handles document generation, data processing, and file operations
  */
 
+require_once __DIR__ . '/../config/EnvLoader.php';
+require_once __DIR__ . '/../helpers/utils.php';
+
 class SuratService {
     
     private $db;
@@ -53,7 +56,7 @@ class SuratService {
         $templatePath = __DIR__ . '/../templates/' . basename($templateName);
         
         if (!file_exists($templatePath) || !is_readable($templatePath)) {
-            throw new Exception("Template not found or not readable: " . escapeOutput($templateName));
+            throw new Exception("Template not found or not readable: " . htmlspecialchars($templateName));
         }
         
         return $templatePath;
@@ -248,10 +251,12 @@ class SuratService {
         }
         
         try {
-            $this->validator->validate($data, $rules);
+            if (method_exists($this->validator, 'validate')) {
+                $this->validator->validate($data, $rules);
+            }
             return [];
-        } catch (ValidationException $e) {
-            return $e->getErrors();
+        } catch (Exception $e) {
+            return ['validation_error' => $e->getMessage()];
         }
     }
 }

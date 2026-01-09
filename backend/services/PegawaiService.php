@@ -28,17 +28,33 @@ class PegawaiService {
      * @return array List of pegawai
      */
     public function getAll($options = []) {
-        $limit = $options['limit'] ?? null;
-        $offset = $options['offset'] ?? 0;
-        $orderBy = $options['orderBy'] ?? 'nama ASC';
+        $limit = isset($options['limit']) ? (int)$options['limit'] : null;
+        $offset = isset($options['offset']) ? (int)$options['offset'] : 0;
+        
+        // Whitelist allowed order by columns to prevent SQL injection
+        $allowedOrderBy = ['nama', 'nip', 'jabatan', 'unit', 'id'];
+        $allowedDirection = ['ASC', 'DESC'];
+        
+        $orderColumn = 'nama';
+        $orderDirection = 'ASC';
+        
+        if (isset($options['orderBy'])) {
+            $orderParts = explode(' ', trim($options['orderBy']));
+            if (count($orderParts) >= 1 && in_array($orderParts[0], $allowedOrderBy)) {
+                $orderColumn = $orderParts[0];
+            }
+            if (count($orderParts) >= 2 && in_array(strtoupper($orderParts[1]), $allowedDirection)) {
+                $orderDirection = strtoupper($orderParts[1]);
+            }
+        }
         
         try {
             $query = "SELECT id, nip, nama, jabatan, unit, email, no_hp 
                       FROM pegawai 
-                      ORDER BY $orderBy";
+                      ORDER BY {$orderColumn} {$orderDirection}";
             
-            if (!is_null($limit)) {
-                $query .= " LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
+            if (!is_null($limit) && $limit > 0) {
+                $query .= " LIMIT " . $limit . " OFFSET " . $offset;
             }
             
             $stmt = $this->db->prepare($query);
@@ -58,15 +74,20 @@ class PegawaiService {
      * @return array|null Pegawai data or null
      */
     public function getById($id) {
+        if (!is_numeric($id) || $id <= 0) {
+            return null;
+        }
+        
         try {
             $query = "SELECT id, nip, nama, jabatan, unit, email, no_hp 
                       FROM pegawai 
                       WHERE id = ? LIMIT 1";
             
             $stmt = $this->db->prepare($query);
-            $stmt->execute([$id]);
+            $stmt->execute([(int)$id]);
             
-            return $stmt->fetch(PDO::FETCH_ASSOC);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $result ?: null;
         } catch (PDOException $e) {
             error_log("Error fetching pegawai by ID: " . $e->getMessage());
             return null;
@@ -102,11 +123,13 @@ class PegawaiService {
      * @return array Search results
      */
     public function search($query) {
-        if (empty(trim($query))) {
+        $cleanQuery = trim($query);
+        if (empty($cleanQuery) || strlen($cleanQuery) < 2) {
             return [];
         }
         
-        $searchTerm = '%' . trim($query) . '%';
+        // Sanitize search term to prevent injection
+        $searchTerm = '%' . addcslashes($cleanQuery, '%_') . '%';
         
         try {
             $sql = "SELECT id, nip, nama, jabatan, unit, email, no_hp 
@@ -197,6 +220,24 @@ class PegawaiService {
      * @return int|false Insert ID or false on failure
      */
     public function create($data) {
+        if (!is_array($data) || empty($data['nip']) || empty($data['nama'])) {
+            return false;
+        }
+        
+        // Basic validation
+        $nip = trim($data['nip']);
+        $nama = trim($data['nama']);
+        
+        if (strlen($nip) < 3 || strlen($nama) < 2) {
+            return false;
+        }
+        
+        // Check if NIP already exists
+        if ($this->getByNip($nip)) {
+            error_log("NIP already exists: " . $nip);
+            return false;
+        }
+        
         // Validate data if validator available
         if ($this->validator) {
             $rules = [
@@ -209,9 +250,11 @@ class PegawaiService {
             ];
             
             try {
-                $this->validator->validate($data, $rules);
-            } catch (ValidationException $e) {
-                error_log("Validation error creating pegawai: " . json_encode($e->getErrors()));
+                if (method_exists($this->validator, 'validate')) {
+                    $this->validator->validate($data, $rules);
+                }
+            } catch (Exception $e) {
+                error_log("Validation error creating pegawai: " . $e->getMessage());
                 return false;
             }
         }
@@ -222,15 +265,15 @@ class PegawaiService {
             
             $stmt = $this->db->prepare($query);
             $success = $stmt->execute([
-                $data['nip'] ?? '',
-                $data['nama'] ?? '',
-                $data['jabatan'] ?? '',
-                $data['unit'] ?? '',
-                $data['email'] ?? '',
-                $data['no_hp'] ?? '',
+                $nip,
+                $nama,
+                trim($data['jabatan'] ?? ''),
+                trim($data['unit'] ?? ''),
+                trim($data['email'] ?? ''),
+                trim($data['no_hp'] ?? ''),
             ]);
             
-            return $success ? $this->db->lastInsertId() : false;
+            return $success ? (int)$this->db->lastInsertId() : false;
         } catch (PDOException $e) {
             error_log("Error creating pegawai: " . $e->getMessage());
             return false;
@@ -245,7 +288,12 @@ class PegawaiService {
      * @return bool Success status
      */
     public function update($id, $data) {
-        if (empty($id) || empty($data)) {
+        if (!is_numeric($id) || $id <= 0 || !is_array($data) || empty($data)) {
+            return false;
+        }
+        
+        // Check if record exists
+        if (!$this->getById($id)) {
             return false;
         }
         
@@ -257,8 +305,24 @@ class PegawaiService {
             
             foreach ($allowedFields as $field) {
                 if (isset($data[$field])) {
-                    $fields[] = "$field = ?";
-                    $values[] = $data[$field];
+                    $value = trim($data[$field]);
+                    
+                    // Skip empty required fields
+                    if (in_array($field, ['nip', 'nama']) && empty($value)) {
+                        continue;
+                    }
+                    
+                    // Check NIP uniqueness if updating NIP
+                    if ($field === 'nip' && !empty($value)) {
+                        $existing = $this->getByNip($value);
+                        if ($existing && $existing['id'] != $id) {
+                            error_log("NIP already exists: " . $value);
+                            return false;
+                        }
+                    }
+                    
+                    $fields[] = "`$field` = ?";
+                    $values[] = $value;
                 }
             }
             
@@ -266,7 +330,7 @@ class PegawaiService {
                 return false;
             }
             
-            $values[] = $id;
+            $values[] = (int)$id;
             
             $query = "UPDATE pegawai SET " . implode(', ', $fields) . " WHERE id = ?";
             $stmt = $this->db->prepare($query);
@@ -285,14 +349,19 @@ class PegawaiService {
      * @return bool Success status
      */
     public function delete($id) {
-        if (empty($id)) {
+        if (!is_numeric($id) || $id <= 0) {
+            return false;
+        }
+        
+        // Check if record exists
+        if (!$this->getById($id)) {
             return false;
         }
         
         try {
             $query = "DELETE FROM pegawai WHERE id = ?";
             $stmt = $this->db->prepare($query);
-            return $stmt->execute([$id]);
+            return $stmt->execute([(int)$id]);
         } catch (PDOException $e) {
             error_log("Error deleting pegawai: " . $e->getMessage());
             return false;
