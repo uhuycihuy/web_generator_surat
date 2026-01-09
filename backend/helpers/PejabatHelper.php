@@ -78,4 +78,14 @@ function formatNamaPejabat($nama, $jabatan = '') {
     }
     return $result;
 }
+
+/**
+ * Backward compatibility aliases
+ * These point to the new Db versions but are kept for legacy code
+ */
+if (!function_exists('getPejabatByJabatanDb')) {
+    function getPejabatByJabatanDb($db, $jabatan) {
+        // Function is already defined above
+    }
+}
 ?>

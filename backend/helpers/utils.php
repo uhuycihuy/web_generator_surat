@@ -40,4 +40,36 @@ function getPejabatJabatanList() {
 function getNamaPejabatList() {
     return getPejabatList();
 }
+
+/**
+ * Get pejabat data by jabatan (legacy wrapper)
+ * Uses hardcoded data for backward compatibility
+ * 
+ * @param string $jabatan - Jabatan pejabat
+ * @return array|null - Return array with nip, nama, jabatan or null if not found
+ */
+function getPejabatByJabatan($jabatan) {
+    $pejabatList = getPejabatList();
+    foreach ($pejabatList as $pejabat) {
+        if ($pejabat['jabatan'] === $jabatan) {
+            return $pejabat;
+        }
+    }
+    return null;
+}
+
+/**
+ * Get all pejabat grouped by jabatan (legacy wrapper)
+ * Uses hardcoded data for backward compatibility
+ * 
+ * @return array - Return array with jabatan as key and pejabat data as value
+ */
+function getPejabatGroupedByJabatan() {
+    $pejabatList = getPejabatList();
+    $grouped = [];
+    foreach ($pejabatList as $pejabat) {
+        $grouped[$pejabat['jabatan']] = $pejabat;
+    }
+    return $grouped;
+}
 ?>
