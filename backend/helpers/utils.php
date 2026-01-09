@@ -1,5 +1,18 @@
 <?php
-// session_start(); // Dikomentari karena tidak semua halaman memerlukan session
+/**
+ * Legacy Master Utilities File
+ * Now acts as a central loader for all specialized helper files
+ * Maintains backward compatibility by including all specialized helpers
+ */
+
+// Load specialized helper files
+require_once __DIR__ . '/RoutingHelper.php';
+require_once __DIR__ . '/AuthHelper.php';
+require_once __DIR__ . '/FormattingHelper.php';
+require_once __DIR__ . '/PejabatHelper.php';
+require_once __DIR__ . '/CommonHelper.php';
+
+// Legacy wrapper functions for backward compatibility
 
 function formatTanggalRange($tglMulai, $tglSelesai) {
     if (empty($tglMulai)) return '';
