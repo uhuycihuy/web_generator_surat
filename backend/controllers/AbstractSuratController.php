@@ -111,10 +111,8 @@ abstract class AbstractSuratController extends BaseController {
                 WHERE nip IN ($placeholders)
             ");
             $stmt->execute($internalNips);
-            $allInternalPegawai = $stmt->fetchAll(PDO::FETCH_KEY_PAIR); // Key by NIP? No, use fetchAll first
-
-            // Re-fetch properly
-            $stmt->execute($internalNips);
+            
+            // Fetch and index by NIP for quick lookup
             $allInternalPegawai = [];
             foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $pegawai) {
                 $allInternalPegawai[$pegawai['nip']] = $pegawai;
